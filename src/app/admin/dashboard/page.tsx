@@ -45,8 +45,10 @@ export default function AdminDashboardPage() {
                       <TableCell className="font-medium">{category.title}</TableCell>
                       <TableCell>{category.lessons.length}</TableCell>
                       <TableCell className="text-left space-x-2 space-x-reverse">
-                        <Button variant="ghost" size="icon" aria-label="ویرایش">
-                          <Edit className="h-4 w-4" />
+                        <Button asChild variant="ghost" size="icon" aria-label="ویرایش">
+                          <Link href={`/admin/edit-category/${category.slug}`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
                         </Button>
                         <Button variant="ghost" size="icon" aria-label="حذف" className="text-destructive hover:text-destructive/90">
                           <Trash2 className="h-4 w-4" />
@@ -60,7 +62,7 @@ export default function AdminDashboardPage() {
           </CardContent>
           <CardFooter>
             <p className="text-xs text-muted-foreground">
-              در حال حاضر دکمه‌های ویرایش، حذف و افزودن غیرفعال هستند و در مراحل بعدی پیاده‌سازی خواهند شد.
+              در حال حاضر دکمه‌های حذف و افزودن غیرفعال هستند و در مراحل بعدی پیاده‌سازی خواهند شد.
             </p>
           </CardFooter>
         </Card>
