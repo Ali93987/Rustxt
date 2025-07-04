@@ -9,5 +9,7 @@ export default function EditCategoryPage({ params }: { params: { slug: string } 
     notFound();
   }
 
-  return <EditCategoryForm category={category} />;
+  const { icon, ...serializableCategory } = category;
+
+  return <EditCategoryForm category={serializableCategory} />;
 }

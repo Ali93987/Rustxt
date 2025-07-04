@@ -11,7 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
-export function EditCategoryForm({ category }: { category: Category }) {
+type SerializableCategory = Omit<Category, 'icon'>;
+
+export function EditCategoryForm({ category }: { category: SerializableCategory }) {
   const router = useRouter();
   const { toast } = useToast();
   
