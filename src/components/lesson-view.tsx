@@ -21,12 +21,12 @@ export function LessonView({ lesson }: LessonViewProps) {
         <div>
           <h2 className="text-2xl font-headline mb-4 flex items-center gap-2">
             <CirclePlay className="text-primary" />
-            Audio Lesson
+            درس صوتی
           </h2>
           <div className="bg-muted p-4 rounded-lg">
             <audio controls className="w-full">
               <source src={lesson.audioSrc} type="audio/mpeg" />
-              Your browser does not support the audio element.
+              مرورگر شما از این فایل صوتی پشتیبانی نمی‌کند.
             </audio>
           </div>
         </div>
@@ -35,15 +35,15 @@ export function LessonView({ lesson }: LessonViewProps) {
             size="lg"
             onClick={() => toggleComplete(lesson.id)}
             variant={completed ? "secondary" : "default"}
-            aria-label={completed ? 'Mark lesson as incomplete' : 'Mark lesson as complete'}
+            aria-label={completed ? 'علامت‌گذاری به عنوان ناقص' : 'علامت‌گذاری به عنوان تکمیل شده'}
           >
             {completed ? (
               <>
-                <RotateCcw className="mr-2 h-4 w-4" /> Mark as Incomplete
+                <RotateCcw className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان ناقص
               </>
             ) : (
               <>
-                <Check className="mr-2 h-4 w-4" /> Mark as Complete
+                <Check className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان تکمیل شده
               </>
             )}
           </Button>

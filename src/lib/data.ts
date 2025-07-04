@@ -1,66 +1,109 @@
+import type { LucideIcon } from 'lucide-react';
+import { BookHeart, BookCheck, Feather, LibraryBig } from 'lucide-react';
+
 export interface Lesson {
   id: number;
   slug: string;
   title: string;
-  description: string;
   text: string;
   audioSrc: string;
 }
 
-export const lessons: Lesson[] = [
+export interface Category {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  lessons: Lesson[];
+}
+
+export const categories: Category[] = [
   {
     id: 1,
-    slug: 'alphabet-and-pronunciation',
-    title: 'Урок 1: Алфавит и произношение',
-    description: 'Learn the Russian alphabet and the basics of pronunciation.',
-    text: `The Russian alphabet, or азбука (azbuka), uses the Cyrillic script. It consists of 33 letters. Some letters look like their Latin counterparts but are pronounced differently. For example, 'В' is pronounced like 'V', and 'Н' is like 'N'.
-
-Let's start with the vowels: А, Е, Ё, И, О, У, Ы, Э, Ю, Я. These letters form the foundation of Russian sounds.`,
-    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    slug: 'children-stories',
+    title: 'قصه‌های کودکانه',
+    description: 'داستان‌های ساده و جذاب برای شروع یادگیری.',
+    icon: BookHeart,
+    lessons: [
+      {
+        id: 101,
+        slug: 'the-turnip',
+        title: 'شلغم',
+        text: 'یک داستان کلاسیک روسی درباره خانواده‌ای که سعی در بیرون کشیدن یک شلغم غول‌پیکر دارند.',
+        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      },
+      {
+        id: 102,
+        slug: 'kolobok',
+        title: 'کُلوبوک',
+        text: 'داستان یک نان زنجبیلی که از دست همه فرار می‌کند.',
+        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      },
+    ],
   },
   {
     id: 2,
-    slug: 'basic-greetings',
-    title: 'Урок 2: Основные приветствия',
-    description: 'Common greetings and phrases for everyday conversation.',
-    text: `Greeting people is the first step in any language.
-
-- Здравствуйте (Zdravstvuyte): Hello (formal)
-- Привет (Privet): Hi (informal)
-- Как дела? (Kak dela?): How are you?
-- Хорошо, спасибо (Khorosho, spasibo): Fine, thank you.
-- До свидания (Do svidaniya): Goodbye.`,
-    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    slug: 'true-stories',
+    title: 'داستان‌های واقعی',
+    description: 'روایت‌های واقعی برای آشنایی با فرهنگ و تاریخ روسیه.',
+    icon: BookCheck,
+    lessons: [
+      {
+        id: 201,
+        slug: 'yuri-gagarin',
+        title: 'یوری گاگارین، اولین انسان در فضا',
+        text: 'داستان پرواز تاریخی یوری گاگارین و تبدیل شدن او به اولین انسانی که به فضا سفر کرد.',
+        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      },
+    ],
   },
   {
     id: 3,
-    slug: 'introducing-yourself',
-    title: 'Урок 3: Представление себя',
-    description: "Learn how to introduce yourself and ask for someone's name.",
-    text: `To introduce yourself, you can say:
-
-- Меня зовут... (Menya zovut...): My name is...
-- Как вас зовут? (Kak vas zovut?): What is your name? (formal)
-- Очень приятно (Ochen' priyatno): Nice to meet you.`,
-    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    slug: 'poems',
+    title: 'شعرها',
+    description: 'آثار شاعران بزرگ روس.',
+    icon: Feather,
+    lessons: [
+      {
+        id: 301,
+        slug: 'pushkin-i-loved-you',
+        title: 'الکساندر پوشکین - من شما را دوست داشتم',
+        text: 'یکی از معروف‌ترین اشعار عاشقانه پوشکین.',
+        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+      },
+    ],
   },
-  {
+    {
     id: 4,
-    slug: 'numbers-and-counting',
-    title: 'Урок 4: Цифры и счёт',
-    description: 'Learn to count from 1 to 10 in Russian.',
-    text: `Counting is an essential skill. Here are the numbers from one to ten:
-
-1. один (odin)
-2. два (dva)
-3. три (tri)
-4. четыре (chetyre)
-5. пять (pyat')
-6. шесть (shest')
-7. семь (sem')
-8. восемь (vosem')
-9. девять (devyat')
-10. десять (desyat')`,
-    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+    slug: 'novels',
+    title: 'رمان‌ها',
+    description: 'گزیده‌ای از رمان‌های کلاسیک روسی.',
+    icon: LibraryBig,
+    lessons: [
+      {
+        id: 401,
+        slug: 'crime-and-punishment-excerpt',
+        title: 'گزیده‌ای از جنایت و مکافات',
+        text: 'بخشی از رمان مشهور فئودور داستایفسکی.',
+        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+      },
+    ],
   },
 ];
+
+export function getCategory(slug: string): Category | undefined {
+  return categories.find((category) => category.slug === slug);
+}
+
+export function getLessonAndCategory(
+  lessonSlug: string
+): { lesson: Lesson; category: Category } | undefined {
+  for (const category of categories) {
+    const lesson = category.lessons.find((l) => l.slug === lessonSlug);
+    if (lesson) {
+      return { lesson, category };
+    }
+  }
+  return undefined;
+}

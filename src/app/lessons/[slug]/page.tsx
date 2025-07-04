@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { lessons, type Lesson } from '@/lib/data';
+import { categories, getLessonAndCategory } from '@/lib/data';
 import { LessonView } from '@/components/lesson-view';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface LessonPageProps {
   params: {
@@ -12,30 +12,30 @@ interface LessonPageProps {
 }
 
 export function generateStaticParams() {
-  return lessons.map((lesson) => ({
-    slug: lesson.slug,
-  }));
-}
-
-function getLessonBySlug(slug: string): Lesson | undefined {
-  return lessons.find((lesson) => lesson.slug === slug);
+  return categories.flatMap((category) =>
+    category.lessons.map((lesson) => ({
+      slug: lesson.slug,
+    }))
+  );
 }
 
 export default function LessonPage({ params }: LessonPageProps) {
-  const lesson = getLessonBySlug(params.slug);
+  const data = getLessonAndCategory(params.slug);
 
-  if (!lesson) {
+  if (!data) {
     notFound();
   }
+
+  const { lesson, category } = data;
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
         <header className="mb-8">
           <Button asChild variant="ghost">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Lessons
+            <Link href={`/category/${category.slug}`}>
+              بازگشت به درس‌ها
+              <ArrowRight className="mr-2 h-4 w-4" />
             </Link>
           </Button>
         </header>
