@@ -68,10 +68,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
               <p className="text-muted-foreground mt-2 text-lg">{lesson.subtitle}</p>
             </div>
           </div>
-
-          <p className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90">
-            {lesson.text}
-          </p>
+          
           <LessonView lesson={lesson} category={serializableCategory} />
         </main>
       </div>
