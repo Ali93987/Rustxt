@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Lesson } from '@/lib/data';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,8 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
   const { toast } = useToast();
   
   const [title, setTitle] = useState(lesson.title);
+  const [subtitle, setSubtitle] = useState(lesson.subtitle);
+  const [logoSrc, setLogoSrc] = useState(lesson.logoSrc);
   const [text, setText] = useState(lesson.text);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +57,39 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subtitle">زیرنویس (توضیح کوتاه)</Label>
+              <Input
+                id="subtitle"
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="logoSrc">آدرس URL لوگو</Label>
+              {logoSrc && (
+                <div className="mb-2">
+                  <Image 
+                    src={logoSrc}
+                    alt="پیش‌نمایش لوگو"
+                    width={80}
+                    height={80}
+                    className="rounded-lg border object-cover"
+                  />
+                </div>
+              )}
+              <Input
+                id="logoSrc"
+                value={logoSrc}
+                onChange={(e) => setLogoSrc(e.target.value)}
+                required
+                dir="ltr"
+              />
+               <p className="text-sm text-muted-foreground">
+                آدرس کامل تصویر لوگوی درس را وارد کنید.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="text">متن درس</Label>

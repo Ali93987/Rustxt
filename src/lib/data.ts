@@ -5,13 +5,16 @@ export interface Lesson {
   id: number;
   slug: string;
   title: string;
+  subtitle: string;
   text: string;
   audioSrc: string;
+  logoSrc: string;
+  logoAiHint: string;
 }
 
 export interface Category {
   id: number;
-  slug: string;
+  slug:string;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -30,15 +33,21 @@ export const categories: Category[] = [
         id: 101,
         slug: 'the-turnip',
         title: 'شلغم',
+        subtitle: 'یک داستان کلاسیک درباره همکاری.',
         text: 'یک داستان کلاسیک روسی درباره خانواده‌ای که سعی در بیرون کشیدن یک شلغم غول‌پیکر دارند.',
         audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        logoSrc: 'https://placehold.co/100x100.png',
+        logoAiHint: 'turnip story',
       },
       {
         id: 102,
         slug: 'kolobok',
         title: 'کُلوبوک',
+        subtitle: 'ماجرای یک نان شیرین و بازیگوش.',
         text: 'داستان یک نان زنجبیلی که از دست همه فرار می‌کند.',
         audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        logoSrc: 'https://placehold.co/100x100.png',
+        logoAiHint: 'gingerbread man',
       },
     ],
   },
@@ -53,8 +62,11 @@ export const categories: Category[] = [
         id: 201,
         slug: 'yuri-gagarin',
         title: 'یوری گاگارین، اولین انسان در فضا',
+        subtitle: 'سفری به تاریخ فضانوردی.',
         text: 'داستان پرواز تاریخی یوری گاگارین و تبدیل شدن او به اولین انسانی که به فضا سفر کرد.',
         audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+        logoSrc: 'https://placehold.co/100x100.png',
+        logoAiHint: 'astronaut space',
       },
     ],
   },
@@ -69,8 +81,11 @@ export const categories: Category[] = [
         id: 301,
         slug: 'pushkin-i-loved-you',
         title: 'الکساندر پوشکین - من شما را دوست داشتم',
+        subtitle: 'شعری عمیق و احساسی.',
         text: 'یکی از معروف‌ترین اشعار عاشقانه پوشکین.',
         audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+        logoSrc: 'https://placehold.co/100x100.png',
+        logoAiHint: 'poem book',
       },
     ],
   },
@@ -85,8 +100,11 @@ export const categories: Category[] = [
         id: 401,
         slug: 'crime-and-punishment-excerpt',
         title: 'گزیده‌ای از جنایت و مکافات',
+        subtitle: 'کاوشی در روان انسان.',
         text: 'بخشی از رمان مشهور فئودور داستایفسکی.',
         audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+        logoSrc: 'https://placehold.co/100x100.png',
+        logoAiHint: 'classic novel',
       },
     ],
   },

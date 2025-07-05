@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { categories, getLessonAndCategory } from '@/lib/data';
 import { LessonView } from '@/components/lesson-view';
 import { Button } from '@/components/ui/button';
@@ -45,9 +46,23 @@ export default function LessonPage({ params }: LessonPageProps) {
         </header>
 
         <main className="bg-card p-6 md:p-10 rounded-lg shadow-lg">
-          <h1 className="font-headline text-3xl md:text-4xl font-bold mb-4 text-primary">
-            {lesson.title}
-          </h1>
+          <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+            <Image
+              src={lesson.logoSrc}
+              alt={`لوگوی درس ${lesson.title}`}
+              width={100}
+              height={100}
+              className="rounded-lg border object-cover shrink-0"
+              data-ai-hint={lesson.logoAiHint}
+            />
+            <div className="flex-1">
+              <h1 className="font-headline text-3xl md:text-4xl font-bold text-primary">
+                {lesson.title}
+              </h1>
+              <p className="text-muted-foreground mt-2 text-lg">{lesson.subtitle}</p>
+            </div>
+          </div>
+
           <p className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90">
             {lesson.text}
           </p>
