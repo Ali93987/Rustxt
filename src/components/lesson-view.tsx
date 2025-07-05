@@ -66,7 +66,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
               return (
                 <Tooltip key={index}>
                   <TooltipTrigger asChild>
-                    <span className="cursor-pointer font-bold text-primary underline decoration-dotted decoration-primary/50 hover:bg-primary/10 transition-colors rounded-sm px-1 py-0.5">
+                    <span className="cursor-pointer">
                       {segment}
                     </span>
                   </TooltipTrigger>
