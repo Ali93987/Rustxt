@@ -7,7 +7,7 @@ import { useWordProgress } from '@/hooks/use-word-progress';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp, Sparkles } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { translateText } from '@/ai/flows/translate-text-flow';
+import { translateWord } from '@/ai/flows/translate-word-flow';
 
 
 type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
@@ -39,31 +39,28 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const completed = isCompleted(lesson.id);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // State for AI-powered single word translations
+  const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, {translation: string, error?: boolean}>>({});
+  const [translatingWord, setTranslatingWord] = useState<string | null>(null);
+
+  // State for the full-text translation tab
   const [viewMode, setViewMode] = useState<'ru' | 'fa'>('ru');
-  const [translation, setTranslation] = useState<string>(lesson.translationFa || '');
-  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [fullTextTranslation] = useState<string>(lesson.translationFa || '');
 
-  const handleTabChange = async (value: string) => {
-    const mode = value as 'ru' | 'fa';
-    setViewMode(mode);
+  // The function to handle AI translation for a single word
+  const handleDynamicTranslate = async (word: string) => {
+      if (dynamicTranslations[word] || translatingWord) return;
 
-    // Fetch translation only if Fa tab is selected for the first time
-    // AND there's no manual translation available.
-    if (mode === 'fa' && !lesson.translationFa && !translation && lesson.text && !isTranslating) {
-       setIsTranslating(true);
-        try {
-          const result = await translateText({
-            text: lesson.text,
-            vocabulary: lesson.vocabulary || {},
-          });
-          setTranslation(result.translation);
-        } catch (error) {
-          console.error("Translation failed:", error);
-          setTranslation("ترجمه این متن با خطا مواجه شد. لطفاً دوباره تلاش کنید.");
-        } finally {
-          setIsTranslating(false);
-        }
-    }
+      setTranslatingWord(word);
+      try {
+          const result = await translateWord({ word });
+          setDynamicTranslations(prev => ({ ...prev, [word]: { translation: result.translation } }));
+      } catch (error) {
+          console.error("Word translation failed:", error);
+          setDynamicTranslations(prev => ({ ...prev, [word]: { translation: 'خطا در ترجمه', error: true } }));
+      } finally {
+          setTranslatingWord(null);
+      }
   };
 
 
@@ -112,7 +109,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
       {/* Lesson Text with Translation Toggle */}
       {lesson.text && (
          <div className="space-y-4 mb-8">
-            <Tabs defaultValue="ru" className="w-full" onValueChange={handleTabChange}>
+            <Tabs defaultValue="ru" className="w-full" onValueChange={(value) => setViewMode(value as 'ru' | 'fa')}>
                 <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="ru">متن اصلی (Ru)</TabsTrigger>
                 <TabsTrigger value="fa">ترجمه (Fa)</TabsTrigger>
@@ -123,60 +120,74 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                         dir="ltr"
                     >
                         {wordsAndSeparators.map((segment, index) => {
-                        const normalized = normalizeWord(segment);
-                        const translation = normalized && lesson.vocabulary?.[normalized];
+                          const normalized = normalizeWord(segment);
+                          if (!normalized) {
+                            return <span key={index}>{segment}</span>;
+                          }
+                          
+                          const preDefinedTranslation = lesson.vocabulary?.[normalized];
+                          const dynamicResult = dynamicTranslations[normalized];
+                          const isTranslatingThisWord = translatingWord === normalized;
 
-                        if (translation && progressEnabled) {
-                        return (
+                          return (
                             <Popover key={index}>
-                            <PopoverTrigger asChild>
+                              <PopoverTrigger asChild>
                                 <span
-                                className={cn(
-                                    "cursor-pointer rounded-sm p-0.5 transition-colors duration-200",
-                                    isWordKnown(normalized) ? "bg-primary/20 text-primary-foreground font-semibold" : "hover:bg-accent/50"
-                                )}
+                                  className={cn(
+                                    'cursor-pointer rounded-sm p-0.5 transition-colors duration-200',
+                                    isWordKnown(normalized) ? 'bg-primary/20 text-primary-foreground font-semibold' : 'hover:bg-accent/50',
+                                  )}
                                 >
-                                {segment}
+                                  {segment}
                                 </span>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-3" align="center" dir="rtl">
-                                <p className="font-body text-base text-center pb-2">{translation}</p>
-                                <Separator />
-                                <div className="flex justify-around pt-2 gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setWordKnownState(normalized, false)}
-                                >
-                                    نمیدانم
-                                    <ThumbsDown className="mr-2 h-4 w-4" />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => setWordKnownState(normalized, true)}
-                                >
-                                    میدانم
-                                    <ThumbsUp className="mr-2 h-4 w-4" />
-                                </Button>
-                                </div>
-                            </PopoverContent>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-3" align="center" dir="rtl">
+                                {preDefinedTranslation ? (
+                                  <>
+                                    <p className="font-body text-base text-center pb-2">{preDefinedTranslation}</p>
+                                    {progressEnabled && (
+                                      <>
+                                        <Separator />
+                                        <div className="flex justify-around pt-2 gap-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setWordKnownState(normalized, false)}
+                                          >
+                                            نمیدانم
+                                            <ThumbsDown className="mr-2 h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            onClick={() => setWordKnownState(normalized, true)}
+                                          >
+                                            میدانم
+                                            <ThumbsUp className="mr-2 h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </>
+                                    )}
+                                  </>
+                                ) : isTranslatingThisWord ? (
+                                    <div className="flex items-center gap-2 p-2">
+                                        <Skeleton className="h-4 w-4 rounded-full animate-spin" />
+                                        <span>در حال ترجمه...</span>
+                                    </div>
+                                ) : dynamicResult ? (
+                                  <p className={cn("font-body text-base text-center", dynamicResult.error && 'text-destructive')}>{dynamicResult.translation}</p>
+                                ) : (
+                                  <Button
+                                      size="sm"
+                                      onClick={() => handleDynamicTranslate(normalized)}
+                                      disabled={translatingWord !== null}
+                                  >
+                                      ترجمه با هوش مصنوعی
+                                      <Sparkles className="mr-2 h-4 w-4" />
+                                  </Button>
+                                )}
+                              </PopoverContent>
                             </Popover>
-                        );
-                        } else if (translation) { // For non-logged in users
-                            return (
-                                <Popover key={index}>
-                                    <PopoverTrigger asChild>
-                                        <span className="cursor-pointer rounded-sm p-0.5 transition-colors duration-200 hover:bg-accent/50">
-                                        {segment}
-                                        </span>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-3" align="center" dir="rtl">
-                                        <p className="font-body text-base text-center">{translation}</p>
-                                    </PopoverContent>
-                                </Popover>
-                            )
-                        }
-                        return <span key={index}>{segment}</span>;
+                          );
                         })}
                     </div>
                 </TabsContent>
@@ -185,15 +196,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                         className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-right"
                         dir="rtl"
                     >
-                        {isTranslating ? (
-                        <div className="space-y-3 p-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-[90%]" />
-                        <Skeleton className="h-4 w-[95%]" />
-                        </div>
-                    ) : (
-                        <p>{translation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
-                    )}
+                      <p>{fullTextTranslation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
                     </div>
                 </TabsContent>
             </Tabs>
