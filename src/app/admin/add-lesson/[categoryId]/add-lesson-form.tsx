@@ -1,8 +1,8 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import type { Category } from '@/lib/data';
 
 import { addLessonAction } from '@/lib/actions';
@@ -30,7 +30,7 @@ function SubmitButton() {
 
 export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 'title'> }) {
   const { toast } = useToast();
-  const [state, formAction] = useFormState(addLessonAction, initialState);
+  const [state, formAction] = useActionState(addLessonAction, initialState);
   const [logoSource, setLogoSource] = useState<'url' | 'upload'>('url');
 
   useEffect(() => {
