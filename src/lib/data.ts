@@ -214,3 +214,23 @@ export async function getUsers(): Promise<User[]> {
     return [];
   }
 }
+
+export async function getUserById(id: string): Promise<User | undefined> {
+  try {
+    const userDocRef = doc(db, 'users', id);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      return undefined;
+    }
+
+    return {
+      id: userDoc.id,
+      ...userDoc.data(),
+    } as User;
+
+  } catch (error) {
+    console.error(`Error fetching user with id ${id}:`, error);
+    return undefined;
+  }
+}

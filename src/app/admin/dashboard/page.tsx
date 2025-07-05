@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PlusCircle, Edit, Trash2, LogOut, User, BookOpen } from 'lucide-react';
+import { UserActions } from './user-actions';
 
 export default async function AdminDashboardPage() {
   const categories = await getCategories();
@@ -142,13 +143,8 @@ export default async function AdminDashboardPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell className="text-left space-x-2 space-x-reverse">
-                           <Button variant="ghost" size="icon" aria-label="ویرایش کاربر" disabled>
-                              <Edit className="h-4 w-4" />
-                           </Button>
-                           <Button variant="ghost" size="icon" aria-label="حذف کاربر" className="text-destructive hover:text-destructive/90" disabled>
-                              <Trash2 className="h-4 w-4" />
-                           </Button>
+                        <TableCell className="text-left">
+                           <UserActions userId={user.id} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -157,11 +153,6 @@ export default async function AdminDashboardPage() {
                </div>
             )}
           </CardContent>
-           <CardFooter>
-            <p className="text-xs text-muted-foreground">
-              قابلیت ویرایش و حذف کاربران در آینده اضافه خواهد شد.
-            </p>
-          </CardFooter>
         </Card>
       </main>
     </div>

@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { addDoc, collection, Timestamp, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -279,7 +279,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
   redirect('/admin/dashboard');
 }
 
-// --- Add User Action ---
+// --- User Actions ---
 const UserSchema = z.object({
   username: z.string().min(3, { message: 'نام کاربری باید حداقل ۳ حرف باشد.' }),
   email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
@@ -330,4 +330,82 @@ export async function addUserAction(prevState: any, formData: FormData) {
   }
 
   redirect('/admin/dashboard');
+}
+
+
+const EditUserSchema = UserSchema.extend({
+  id: z.string().min(1, { message: 'شناسه کاربر الزامی است.' }),
+});
+
+export async function editUserAction(prevState: any, formData: FormData) {
+  const validatedFields = EditUserSchema.safeParse({
+    id: formData.get('id'),
+    username: formData.get('username'),
+    email: formData.get('email'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: validatedFields.error.errors.map(e => e.message).join(', '),
+      success: false,
+    };
+  }
+
+  const { id, username, email } = validatedFields.data;
+
+  try {
+    const userDocRef = doc(db, 'users', id);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      return { message: 'کاربر یافت نشد.', success: false };
+    }
+
+    const currentUser = userDoc.data();
+
+    // Check if new username is taken by another user
+    if (username !== currentUser.username) {
+      const usernameQuery = query(collection(db, 'users'), where('username', '==', username));
+      const usernameSnapshot = await getDocs(usernameQuery);
+      if (!usernameSnapshot.empty) {
+        return { message: 'این نام کاربری قبلا استفاده شده است.', success: false };
+      }
+    }
+
+    // Check if new email is taken by another user
+    if (email !== currentUser.email) {
+      const emailQuery = query(collection(db, 'users'), where('email', '==', email));
+      const emailSnapshot = await getDocs(emailQuery);
+      if (!emailSnapshot.empty) {
+        return { message: 'این ایمیل قبلا استفاده شده است.', success: false };
+      }
+    }
+
+    await updateDoc(userDocRef, {
+      username,
+      email,
+    });
+
+    revalidatePath('/admin/dashboard');
+
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
+  }
+
+  redirect('/admin/dashboard');
+}
+
+export async function deleteUserAction(userId: string): Promise<{ message: string } | void> {
+  try {
+    if (!userId) {
+        throw new Error("شناسه کاربر الزامی است.");
+    }
+    await deleteDoc(doc(db, 'users', userId));
+    revalidatePath('/admin/dashboard');
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    const message = error instanceof Error ? error.message : 'یک خطای غیرمنتظره در سرور رخ داد.';
+    return { message };
+  }
 }
