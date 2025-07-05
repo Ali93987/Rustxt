@@ -12,11 +12,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
-const initialState = {
+interface AuthUser {
+  id: string;
+  username: string;
+  activeSessionToken: string;
+}
+
+const initialState: {
+  message: string;
+  success: boolean;
+  user: AuthUser | null;
+} = {
   message: '',
   success: false,
   user: null,
 };
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();

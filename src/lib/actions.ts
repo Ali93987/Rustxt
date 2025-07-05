@@ -7,6 +7,7 @@ import { db } from './firebase';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { availableIcons, getCategoryById } from './data';
+import { randomUUID } from 'crypto';
 
 // Basic slugify function
 function slugify(text: string): string {
@@ -471,12 +472,21 @@ export async function loginUserAction(prevState: any, formData: FormData) {
       return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
     }
 
-    // On successful login, return user data
+    // Generate a new session token
+    const newSessionToken = randomUUID();
+
+    // Update the user document in Firestore with the new token
+    await updateDoc(userDoc.ref, {
+      activeSessionToken: newSessionToken,
+    });
+
+    // On successful login, return user data with the session token
     return {
       success: true,
       user: {
         id: userDoc.id,
         username: userData.username,
+        activeSessionToken: newSessionToken,
       },
     };
 

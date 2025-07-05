@@ -1,52 +1,83 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface AuthUser {
   id: string;
   username: string;
+  activeSessionToken: string;
 }
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // This function syncs the user state from localStorage
-  const syncUser = useCallback(() => {
-    try {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Failed to parse user from localStorage', error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+  const logout = useCallback(() => {
+    localStorage.removeItem('currentUser');
+    setUser(null);
   }, []);
 
   useEffect(() => {
-    // Sync user on initial mount
+    let unsubscribe: (() => void) | null = null;
+
+    const syncUser = () => {
+      // If a listener is already active, unsubscribe before creating a new one.
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
+
+      try {
+        const storedUserJSON = localStorage.getItem('currentUser');
+        if (storedUserJSON) {
+          const storedUser: AuthUser = JSON.parse(storedUserJSON);
+          setUser(storedUser);
+
+          // Set up a real-time listener on the user's document
+          const userDocRef = doc(db, 'users', storedUser.id);
+          unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+              const dbUser = docSnap.data();
+              // If the token in the DB does not match the token in localStorage,
+              // it means a newer session has been created. Log this session out.
+              if (dbUser.activeSessionToken && dbUser.activeSessionToken !== storedUser.activeSessionToken) {
+                console.log('Newer session detected. Logging out this session.');
+                logout();
+              }
+            } else {
+              // The user document was deleted, so log out.
+              console.log('User document not found. Logging out.');
+              logout();
+            }
+          }, (error) => {
+            console.error("Error with session listener:", error);
+            logout();
+          });
+
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to process user session', error);
+        logout(); // Logout on error to be safe
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     syncUser();
 
-    // Add event listener to sync user across tabs
     window.addEventListener('storage', syncUser);
 
-    // Cleanup listener on unmount
     return () => {
       window.removeEventListener('storage', syncUser);
+      if (unsubscribe) {
+        unsubscribe(); // Cleanup the listener on component unmount
+      }
     };
-  }, [syncUser]);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('currentUser');
-    // syncUser will be called automatically by the storage event listener,
-    // but we call it here to ensure immediate UI update in the current tab.
-    syncUser();
-  }, [syncUser]);
+  }, [logout]);
 
   return { user, logout, isLoading };
 };
