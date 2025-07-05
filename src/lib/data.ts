@@ -48,6 +48,19 @@ export const availableIcons = Object.keys(iconMap);
 
 // --- Data Fetching Functions ---
 
+/**
+ * Corrects common typos in image placeholder URLs and provides a fallback.
+ * @param url The original image URL from the database.
+ * @returns A corrected, valid URL string.
+ */
+function correctImageUrl(url: string | undefined | null): string {
+  if (!url || url.trim() === '') {
+    return 'https://placehold.co/100x100.png';
+  }
+  // This regex fixes common typos like "placehold.c" or "placehold.coo"
+  return url.replace(/placehold\.c(oo)?\b/g, 'placehold.co');
+}
+
 export async function getCategories(): Promise<Category[]> {
   try {
     const categoriesCollection = collection(db, 'categories');
@@ -63,10 +76,14 @@ export async function getCategories(): Promise<Category[]> {
       const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
       const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
       const lessonsSnapshot = await getDocs(lessonsQuery);
-      categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => ({
-          id: lessonDoc.id,
-          ...lessonDoc.data(),
-      } as Lesson));
+      categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => {
+          const lesson = {
+              id: lessonDoc.id,
+              ...lessonDoc.data(),
+          } as Lesson;
+          lesson.logoSrc = correctImageUrl(lesson.logoSrc);
+          return lesson;
+      });
 
       return categoryData;
     }));
@@ -96,10 +113,14 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
     const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
     const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
     const lessonsSnapshot = await getDocs(lessonsQuery);
-    categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => ({
-        id: lessonDoc.id,
-        ...lessonDoc.data(),
-    } as Lesson));
+    categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => {
+        const lesson = {
+            id: lessonDoc.id,
+            ...lessonDoc.data(),
+        } as Lesson;
+        lesson.logoSrc = correctImageUrl(lesson.logoSrc);
+        return lesson;
+    });
     
     return categoryData;
 
@@ -149,6 +170,9 @@ export async function getLessonAndCategory(
         const lessonDoc = lessonSnapshot.docs[0];
         const lesson = { id: lessonDoc.id, ...lessonDoc.data() } as Lesson;
         const category = { id: categoryDoc.id, ...categoryDoc.data() } as Category;
+        
+        lesson.logoSrc = correctImageUrl(lesson.logoSrc);
+
         category.lessons = []; 
         return { lesson, category };
       }

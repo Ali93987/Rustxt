@@ -14,13 +14,6 @@ export default async function EditLessonPage({ params }: { params: { slug: strin
 
   // Since EditLessonForm is a client component, we only pass a serializable lesson object.
   const { createdAt, ...serializableLesson } = lesson;
-  
-  // Fix for potential typos in image URL on the server before passing to the client.
-  if (serializableLesson.logoSrc) {
-    serializableLesson.logoSrc = (serializableLesson.logoSrc)
-      .replace('placehold.c', 'placehold.co')
-      .replace('placehold.coo', 'placehold.co');
-  }
 
   return <EditLessonForm lesson={serializableLesson as Lesson} />;
 }

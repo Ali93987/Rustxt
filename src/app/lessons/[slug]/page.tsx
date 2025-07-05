@@ -40,10 +40,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const { icon, createdAt: _cAt, ...serializableCategory } = category;
   const { createdAt: _lAt, ...serializableLesson } = lesson;
 
-  // Fix for potential typos in image URL from database
-  const correctedLogoSrc = (serializableLesson.logoSrc || '').replace('placehold.c', 'placehold.co').replace('placehold.coo', 'placehold.co');
-
-
   return (
     <div className="min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
@@ -59,7 +55,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <main className="bg-card p-6 md:p-10 rounded-lg shadow-lg">
           <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
             <Image
-              src={correctedLogoSrc}
+              src={serializableLesson.logoSrc}
               alt={`لوگوی درس ${lesson.title}`}
               width={100}
               height={100}
