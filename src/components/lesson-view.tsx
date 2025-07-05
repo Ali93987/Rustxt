@@ -117,7 +117,13 @@ export function LessonView({ lesson, category }: LessonViewProps) {
             </TabsList>
           </Tabs>
           
-          <div className="whitespace-pre-wrap font-body text-lg text-right leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px]">
+          <div
+            className={cn(
+              "whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px]",
+              viewMode === 'ru' ? "text-left" : "text-right"
+            )}
+            dir={viewMode === 'ru' ? "ltr" : "rtl"}
+          >
             {viewMode === 'ru' ? (
                 wordsAndSeparators.map((segment, index) => {
                 const normalized = normalizeWord(segment);
@@ -170,7 +176,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                   <Skeleton className="h-4 w-[95%]" />
                 </div>
               ) : (
-                <p dir="rtl">{translation}</p>
+                <p>{translation}</p>
               )
             )}
           </div>
