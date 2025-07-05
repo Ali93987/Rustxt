@@ -1,9 +1,12 @@
+
 import { notFound } from 'next/navigation';
 import { getCategory } from '@/lib/data';
 import { EditCategoryForm } from './edit-category-form';
 
 export default async function EditCategoryPage({ params }: { params: { slug: string } }) {
-  const category = await getCategory(params.slug);
+  // Decode the slug from the URL parameters as it might be URL-encoded.
+  const decodedSlug = decodeURIComponent(params.slug);
+  const category = await getCategory(decodedSlug);
 
   if (!category) {
     notFound();

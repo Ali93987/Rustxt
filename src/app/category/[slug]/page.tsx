@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getCategories, getCategory } from '@/lib/data';
@@ -19,7 +20,9 @@ export async function generateStaticParams() {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const category = await getCategory(params.slug);
+  // Decode the slug from the URL parameters as it might be URL-encoded.
+  const decodedSlug = decodeURIComponent(params.slug);
+  const category = await getCategory(decodedSlug);
 
   if (!category) {
     notFound();

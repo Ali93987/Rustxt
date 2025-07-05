@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,7 +28,9 @@ export async function generateStaticParams() {
 }
 
 export default async function LessonPage({ params }: LessonPageProps) {
-  const data = await getLessonAndCategory(params.slug);
+  // Decode the slug from the URL parameters as it might be URL-encoded.
+  const decodedSlug = decodeURIComponent(params.slug);
+  const data = await getLessonAndCategory(decodedSlug);
 
   if (!data) {
     notFound();

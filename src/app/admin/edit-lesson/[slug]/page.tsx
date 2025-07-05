@@ -1,10 +1,13 @@
+
 import { notFound } from 'next/navigation';
 import { getLessonAndCategory } from '@/lib/data';
 import { EditLessonForm } from './edit-lesson-form';
 import type { Lesson } from '@/lib/data';
 
 export default async function EditLessonPage({ params }: { params: { slug: string } }) {
-  const data = await getLessonAndCategory(params.slug);
+  // Decode the slug from the URL parameters as it might be URL-encoded.
+  const decodedSlug = decodeURIComponent(params.slug);
+  const data = await getLessonAndCategory(decodedSlug);
 
   if (!data) {
     notFound();
