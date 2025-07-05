@@ -1,8 +1,8 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useEffect, useActionState } from 'react';
+import { useEffect } from 'react';
 
 import { addCategoryAction } from '@/lib/actions';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -28,7 +28,7 @@ function SubmitButton() {
 
 export function AddCategoryForm() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(addCategoryAction, initialState);
+  const [state, formAction] = useFormState(addCategoryAction, initialState);
 
   useEffect(() => {
     if (state?.message && !state.success) {

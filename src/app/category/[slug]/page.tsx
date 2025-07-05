@@ -25,6 +25,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
+  // Client components cannot receive non-serializable props like Timestamp objects.
+  // We remove the `createdAt` field before passing the lessons to the client component.
+  const serializableLessons = category.lessons.map(lesson => {
+    const { createdAt, ...rest } = lesson;
+    return rest;
+  });
+
   return (
     <div className="container mx-auto p-4 md:p-8 min-h-screen">
       <header className="mb-8 flex justify-between items-center">
@@ -40,7 +47,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </header>
 
       <main>
-        <LessonList lessons={category.lessons} />
+        <LessonList lessons={serializableLessons} />
       </main>
     </div>
   );

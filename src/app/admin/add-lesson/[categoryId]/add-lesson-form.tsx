@@ -1,8 +1,8 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useEffect, useActionState } from 'react';
+import { useEffect } from 'react';
 import type { Category } from '@/lib/data';
 
 import { addLessonAction } from '@/lib/actions';
@@ -29,7 +29,7 @@ function SubmitButton() {
 
 export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 'title'> }) {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(addLessonAction, initialState);
+  const [state, formAction] = useFormState(addLessonAction, initialState);
 
   useEffect(() => {
     if (state?.message && !state.success) {
