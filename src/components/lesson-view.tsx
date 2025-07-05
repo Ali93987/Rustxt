@@ -57,7 +57,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
     <TooltipProvider delayDuration={100}>
       {/* Lesson Text */}
       {lesson.text && (
-        <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md">
+        <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md bg-muted/30">
           {wordsAndSeparators.map((segment, index) => {
             const normalized = normalizeWord(segment);
             const translation = normalized && lesson.vocabulary?.[normalized];
