@@ -68,7 +68,11 @@ export function LessonView({ lesson, category }: LessonViewProps) {
       setTranslation(result);
     } catch (e) {
       console.error(e);
-      setError('متأسفانه ترجمه این کلمه با خطا مواجه شد.');
+      const errorMessage =
+        e instanceof Error && e.message.toLowerCase().includes('permission denied')
+          ? 'سرویس هوش مصنوعی فعال نیست. لطفاً از فعال بودن Vertex AI API در پروژه Google Cloud خود اطمینان حاصل کنید.'
+          : 'متأسفانه ترجمه این کلمه با خطا مواجه شد.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
