@@ -18,7 +18,7 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
   
   const [title, setTitle] = useState(lesson.title || '');
   const [subtitle, setSubtitle] = useState(lesson.subtitle || '');
-  const [logoSrc, setLogoSrc] = useState((lesson.logoSrc || '').replace('placehold.c', 'placehold.co').replace('placehold.coo', 'placehold.co'));
+  const [logoSrc, setLogoSrc] = useState(lesson.logoSrc || '');
   const [text, setText] = useState(lesson.text || '');
   const [audioSrc, setAudioSrc] = useState(lesson.audioSrc || '');
   const [isLoading, setIsLoading] = useState(false);
