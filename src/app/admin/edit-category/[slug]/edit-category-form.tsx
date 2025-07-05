@@ -65,12 +65,11 @@ export function EditCategoryForm({ category }: { category: SerializableCategory 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">توضیحات</Label>
+              <Label htmlFor="description">توضیحات (اختیاری)</Label>
               <Textarea
                 id="description"
                 name="description"
                 defaultValue={category.description}
-                required
                 rows={4}
                 className="resize-none"
               />

@@ -61,12 +61,11 @@ export function AddCategoryForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">توضیحات</Label>
+              <Label htmlFor="description">توضیحات (اختیاری)</Label>
               <Textarea
                 id="description"
                 name="description"
                 placeholder="توضیح کوتاهی درباره این دسته‌بندی بنویسید."
-                required
                 rows={4}
                 className="resize-none"
               />

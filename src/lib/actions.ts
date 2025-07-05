@@ -15,14 +15,14 @@ function slugify(text: string): string {
     .toString()
     .toLowerCase()
     .trim()
+    .replace(/[.,!?;:"()']/g, '') // remove common punctuation
     .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/[^\w-]+/g, '') // Remove all non-word chars
     .replace(/--+/g, '-'); // Replace multiple - with single -
 }
 
 const CategorySchema = z.object({
   title: z.string().min(3, { message: 'عنوان باید حداقل ۳ حرف باشد.' }),
-  description: z.string().min(10, { message: 'توضیحات باید حداقل ۱۰ حرف باشد.' }),
+  description: z.string().optional(),
 });
 
 export async function addCategoryAction(prevState: any, formData: FormData) {
@@ -53,7 +53,7 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
 
     await addDoc(collection(db, 'categories'), {
       title,
-      description,
+      description: description || '',
       slug: newSlug,
       icon: randomIcon,
       createdAt: Timestamp.now(),
@@ -109,7 +109,7 @@ export async function editCategoryAction(prevState: any, formData: FormData) {
         
         await updateDoc(categoryDocRef, {
             title,
-            description,
+            description: description || '',
             slug: newSlug,
         });
 
