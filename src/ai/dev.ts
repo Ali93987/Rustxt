@@ -1,2 +1,1 @@
-// Flows will be imported for their side effects in this file.
-import '@/ai/flows/translate-word-flow';
+// This file is intentionally left blank as the AI features have been removed.

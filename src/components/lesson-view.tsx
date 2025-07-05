@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Lesson, Category } from '@/lib/data';
 import { useProgress } from '@/hooks/use-progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Check, CirclePlay, RotateCcw, Loader2, Volume2 } from 'lucide-react';
-import { translateWord, type TranslateWordOutput } from '@/ai/flows/translate-word-flow';
+import { Check, CirclePlay, RotateCcw } from 'lucide-react';
 
-type SerializableCategory = Omit<Category, 'icon'>;
+type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
+type SerializableLesson = Omit<Lesson, 'createdAt'>;
 
 interface LessonViewProps {
-  lesson: Lesson;
+  lesson: SerializableLesson;
   category: SerializableCategory;
 }
 
@@ -20,14 +19,6 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const { isCompleted, toggleComplete } = useProgress();
   const completed = isCompleted(lesson.id);
   const audioRef = useRef<HTMLAudioElement>(null);
-  
-  // State for the translation dialog
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedWord, setSelectedWord] = useState('');
-  const [translation, setTranslation] = useState<TranslateWordOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const pronunciationAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -50,36 +41,16 @@ export function LessonView({ lesson, category }: LessonViewProps) {
     }
   }, [lesson, category]);
 
-  const handleWordClick = async (word: string) => {
+  const handleWordClick = (word: string) => {
     // Clean the word from punctuation and check if it's a valid Russian word to translate
     const cleanedWord = word.trim().replace(/[.,!?;:"]+$/, '');
     if (!cleanedWord || !/^[а-яА-ЯёЁ]+$/.test(cleanedWord)) {
       return;
     }
     
-    setSelectedWord(cleanedWord);
-    setIsDialogOpen(true);
-    setIsLoading(true);
-    setError(null);
-    setTranslation(null);
-
-    try {
-      const result = await translateWord({ word: cleanedWord });
-      setTranslation(result);
-    } catch (e) {
-      console.error(e);
-      const errorMessage =
-        e instanceof Error && e.message.toLowerCase().includes('permission denied')
-          ? 'سرویس هوش مصنوعی فعال نیست. لطفاً از فعال بودن Vertex AI API در پروژه Google Cloud خود اطمینان حاصل کنید.'
-          : 'متأسفانه ترجمه این کلمه با خطا مواجه شد.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const playPronunciation = () => {
-    pronunciationAudioRef.current?.play();
+    // Open Google Translate in a new tab
+    const googleTranslateUrl = `https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(cleanedWord)}&op=translate`;
+    window.open(googleTranslateUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -106,46 +77,6 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           })}
         </div>
       )}
-
-      {/* Translation Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-3xl text-primary" dir="ltr">{selectedWord}</DialogTitle>
-            <DialogDescription>
-              ترجمه و تلفظ کلمه با هوش مصنوعی
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 min-h-[150px] flex items-center justify-center">
-            {isLoading && (
-              <div className="flex items-center justify-center flex-col gap-4">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="mr-4 text-muted-foreground">در حال ترجمه...</p>
-              </div>
-            )}
-            {error && <p className="text-destructive text-center">{error}</p>}
-            {translation && (
-              <div className="space-y-4 text-right w-full">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="text-lg font-semibold text-muted-foreground">ترجمه:</h3>
-                  <p className="text-xl font-bold">{translation.translation}</p>
-                </div>
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="text-lg font-semibold text-muted-foreground">تلفظ:</h3>
-                  <p className="text-lg" dir="ltr">{translation.phonetic}</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-muted-foreground">بشنوید:</h3>
-                  <Button variant="outline" size="icon" onClick={playPronunciation}>
-                    <Volume2 className="h-6 w-6 text-primary" />
-                  </Button>
-                  <audio ref={pronunciationAudioRef} src={translation.audioDataUri} className="hidden" />
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
       
       <Separator className="my-8" />
       
