@@ -7,7 +7,7 @@ import { useWordProgress } from '@/hooks/use-word-progress';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp, Sparkles } from 'lucide-react';
+import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp, ExternalLink } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -16,8 +16,6 @@ import {
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { translateWord } from '@/ai/flows/translate-word-flow';
 
 
 type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
@@ -39,29 +37,9 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const completed = isCompleted(lesson.id);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // State for AI-powered single word translations
-  const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, {translation: string, error?: boolean}>>({});
-  const [translatingWord, setTranslatingWord] = useState<string | null>(null);
-
   // State for the full-text translation tab
   const [viewMode, setViewMode] = useState<'ru' | 'fa'>('ru');
   const [fullTextTranslation] = useState<string>(lesson.translationFa || '');
-
-  // The function to handle AI translation for a single word
-  const handleDynamicTranslate = async (word: string) => {
-      if (dynamicTranslations[word] || translatingWord) return;
-
-      setTranslatingWord(word);
-      try {
-          const result = await translateWord({ word });
-          setDynamicTranslations(prev => ({ ...prev, [word]: { translation: result.translation } }));
-      } catch (error) {
-          console.error("Word translation failed:", error);
-          setDynamicTranslations(prev => ({ ...prev, [word]: { translation: 'خطا در ترجمه', error: true } }));
-      } finally {
-          setTranslatingWord(null);
-      }
-  };
 
 
   const totalWordsWithTranslation = useMemo(() => {
@@ -126,9 +104,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                           }
                           
                           const preDefinedTranslation = lesson.vocabulary?.[normalized];
-                          const dynamicResult = dynamicTranslations[normalized];
-                          const isTranslatingThisWord = translatingWord === normalized;
-
+                          
                           return (
                             <Popover key={index}>
                               <PopoverTrigger asChild>
@@ -168,21 +144,17 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                                       </>
                                     )}
                                   </>
-                                ) : isTranslatingThisWord ? (
-                                    <div className="flex items-center gap-2 p-2">
-                                        <Skeleton className="h-4 w-4 rounded-full animate-spin" />
-                                        <span>در حال ترجمه...</span>
-                                    </div>
-                                ) : dynamicResult ? (
-                                  <p className={cn("font-body text-base text-center", dynamicResult.error && 'text-destructive')}>{dynamicResult.translation}</p>
                                 ) : (
-                                  <Button
-                                      size="sm"
-                                      onClick={() => handleDynamicTranslate(normalized)}
-                                      disabled={translatingWord !== null}
-                                  >
-                                      ترجمه با هوش مصنوعی
-                                      <Sparkles className="mr-2 h-4 w-4" />
+                                  <Button asChild size="sm">
+                                    <a
+                                      href={`https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(normalized)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2"
+                                    >
+                                      ترجمه با گوگل
+                                      <ExternalLink className="h-4 w-4" />
+                                    </a>
                                   </Button>
                                 )}
                               </PopoverContent>
