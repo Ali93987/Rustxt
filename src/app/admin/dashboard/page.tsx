@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
                   <AccordionTrigger className="text-xl hover:no-underline">
                     <div className="flex items-center justify-between w-full pr-4">
                       <span>{category.title}</span>
-                      <Button asChild variant="ghost" size="icon" aria-label="ویرایش دسته بندی" onClick={(e) => e.stopPropagation()}>
+                      <Button asChild variant="ghost" size="icon" aria-label="ویرایش دسته بندی">
                         <Link href={`/admin/edit-category/${category.slug}`}>
                           <Edit className="h-4 w-4" />
                         </Link>
