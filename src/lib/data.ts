@@ -18,6 +18,7 @@ export interface Lesson {
   logoSrc: string;
   logoAiHint: string;
   vocabulary?: Record<string, string>;
+  isVip?: boolean;
   createdAt?: Timestamp;
 }
 

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const initialState = {
   message: '',
@@ -125,6 +126,22 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
               />
                <p className="text-sm text-muted-foreground">
                 آدرس کامل تصویر لوگوی درس را وارد کنید.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>نوع درس</Label>
+              <RadioGroup name="isVip" defaultValue={String(lesson.isVip || false)} className="flex items-center gap-x-4">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <RadioGroupItem value="false" id="isVip-false" />
+                  <Label htmlFor="isVip-false" className="font-normal">عادی (برای همه)</Label>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <RadioGroupItem value="true" id="isVip-true" />
+                  <Label htmlFor="isVip-true" className="font-normal">ویژه (VIP)</Label>
+                </div>
+              </RadioGroup>
+              <p className="text-sm text-muted-foreground">
+                درس‌های ویژه فقط برای کاربرانی که وارد شده‌اند نمایش داده می‌شود.
               </p>
             </div>
             <div className="space-y-2">

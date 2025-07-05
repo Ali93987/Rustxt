@@ -134,6 +134,7 @@ const LessonSchema = z.object({
   title: z.string().min(1, { message: 'عنوان درس الزامی است.' }),
   subtitle: z.string().nullable().optional(),
   logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).nullable().optional(),
+  isVip: z.enum(['false', 'true']).default('false'),
   text: z.string().nullable().optional(),
   translationFa: z.string().nullable().optional(),
   audioSrc: z.string().url({ message: "آدرس اینترنتی فایل صوتی نامعتبر است." }).or(z.literal('')).nullable().optional(),
@@ -147,6 +148,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     title: formData.get('title'),
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
+    isVip: formData.get('isVip'),
     text: formData.get('text'),
     translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
@@ -159,7 +161,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, text, translationFa, logoSrc, audioSrc, vocabulary } = validatedFields.data;
+  const { categoryId, title, subtitle, text, translationFa, logoSrc, audioSrc, vocabulary, isVip } = validatedFields.data;
   const lessonSlug = slugify(title);
   
   const vocabularyData = vocabulary ? JSON.parse(vocabulary) : {};
@@ -185,6 +187,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       slug: lessonSlug,
       logoSrc: finalLogoSrc,
       logoAiHint: "language lesson",
+      isVip: isVip === 'true',
       text: text || '',
       translationFa: translationFa || '',
       audioSrc: audioSrc || '',
@@ -217,6 +220,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
     title: formData.get('title'),
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
+    isVip: formData.get('isVip'),
     text: formData.get('text'),
     translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
@@ -228,7 +232,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
 
-  const { lessonId, categoryId, title, ...data } = validatedFields.data;
+  const { lessonId, categoryId, title, isVip, ...data } = validatedFields.data;
   const newSlug = slugify(title);
   const vocabularyData = data.vocabulary ? JSON.parse(data.vocabulary) : {};
 
@@ -258,6 +262,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
       subtitle: data.subtitle || '',
       slug: newSlug,
       logoSrc: data.logoSrc || 'https://placehold.co/100x100.png',
+      isVip: isVip === 'true',
       text: data.text || '',
       translationFa: data.translationFa || '',
       audioSrc: data.audioSrc || '',
