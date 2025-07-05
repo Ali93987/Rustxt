@@ -40,8 +40,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const { icon, createdAt: _cAt, ...serializableCategory } = category;
   const { createdAt: _lAt, ...serializableLesson } = lesson;
 
-  // Fix for potential typo in image URL from database
-  const correctedLogoSrc = (serializableLesson.logoSrc || '').replace('placehold.c', 'placehold.co');
+  // Fix for potential typos in image URL from database
+  const correctedLogoSrc = (serializableLesson.logoSrc || '').replace('placehold.c', 'placehold.co').replace('placehold.coo', 'placehold.co');
 
 
   return (
