@@ -201,6 +201,31 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 آدرس کامل فایل صوتی (مثلاً MP3) را وارد کنید.
               </p>
             </div>
+             <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="audioStartTime">زمان شروع پخش (ثانیه)</Label>
+                    <Input
+                        id="audioStartTime"
+                        name="audioStartTime"
+                        type="number"
+                        placeholder="مثلا: 180"
+                        min="0"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="audioEndTime">زمان پایان پخش (ثانیه)</Label>
+                    <Input
+                        id="audioEndTime"
+                        name="audioEndTime"
+                        type="number"
+                        placeholder="مثلا: 480"
+                        min="0"
+                    />
+                </div>
+            </div>
+            <p className="text-sm text-muted-foreground -mt-2">
+                برای پخش بخشی از فایل صوتی، زمان شروع و پایان را به ثانیه وارد کنید. اگر خالی بماند، کل فایل پخش می‌شود.
+            </p>
           </CardContent>
           <CardFooter className="flex justify-between">
              <Button variant="link" asChild>

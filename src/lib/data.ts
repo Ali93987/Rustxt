@@ -20,6 +20,8 @@ export interface Lesson {
   vocabulary?: Record<string, string>;
   isVip?: boolean;
   createdAt?: Timestamp;
+  audioStartTime?: number;
+  audioEndTime?: number;
 }
 
 export interface Category {

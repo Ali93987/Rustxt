@@ -141,7 +141,17 @@ const LessonSchema = z.object({
   text: z.string().nullable().optional(),
   translationFa: z.string().nullable().optional(),
   audioSrc: z.string().url({ message: "آدرس اینترنتی فایل صوتی نامعتبر است." }).or(z.literal('')).nullable().optional(),
+  audioStartTime: z.coerce.number().optional().nullable(),
+  audioEndTime: z.coerce.number().optional().nullable(),
   vocabulary: z.string().optional(),
+}).refine((data) => {
+    if (data.audioStartTime != null && data.audioEndTime != null) {
+        return data.audioEndTime > data.audioStartTime;
+    }
+    return true;
+}, {
+    message: "زمان پایان باید بعد از زمان شروع باشد.",
+    path: ["audioEndTime"],
 });
 
 
@@ -155,6 +165,8 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     text: formData.get('text'),
     translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
+    audioStartTime: formData.get('audioStartTime') || null,
+    audioEndTime: formData.get('audioEndTime') || null,
     vocabulary: formData.get('vocabulary'),
   });
 
@@ -164,7 +176,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, text, translationFa, logoSrc, audioSrc, vocabulary, isVip } = validatedFields.data;
+  const { categoryId, title, subtitle, text, translationFa, logoSrc, audioSrc, vocabulary, isVip, audioStartTime, audioEndTime } = validatedFields.data;
   const lessonSlug = slugify(title);
   
   const vocabularyData = vocabulary ? JSON.parse(vocabulary) : {};
@@ -184,7 +196,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     
     const finalLogoSrc = logoSrc || 'https://placehold.co/100x100.png';
     
-    await addDoc(lessonCollectionRef, {
+    const lessonData: any = {
       title,
       subtitle: subtitle || '',
       slug: lessonSlug,
@@ -196,7 +208,12 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       audioSrc: audioSrc || '',
       vocabulary: vocabularyData,
       createdAt: Timestamp.now(),
-    });
+    };
+
+    if (audioStartTime != null) lessonData.audioStartTime = audioStartTime;
+    if (audioEndTime != null) lessonData.audioEndTime = audioEndTime;
+
+    await addDoc(lessonCollectionRef, lessonData);
     
     revalidatePath('/admin/dashboard');
     revalidatePath(`/category/${category.slug}`);
@@ -227,6 +244,8 @@ export async function editLessonAction(prevState: any, formData: FormData) {
     text: formData.get('text'),
     translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
+    audioStartTime: formData.get('audioStartTime') || null,
+    audioEndTime: formData.get('audioEndTime') || null,
     vocabulary: formData.get('vocabulary'),
   });
 
@@ -260,7 +279,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
       }
     }
 
-    await updateDoc(lessonDocRef, {
+    const dataToUpdate: any = {
       title,
       subtitle: data.subtitle || '',
       slug: newSlug,
@@ -270,7 +289,13 @@ export async function editLessonAction(prevState: any, formData: FormData) {
       translationFa: data.translationFa || '',
       audioSrc: data.audioSrc || '',
       vocabulary: vocabularyData,
-    });
+    };
+    
+    if (data.audioStartTime != null) dataToUpdate.audioStartTime = data.audioStartTime;
+    if (data.audioEndTime != null) dataToUpdate.audioEndTime = data.audioEndTime;
+
+
+    await updateDoc(lessonDocRef, dataToUpdate);
 
     revalidatePath('/admin/dashboard');
     revalidatePath(`/category/${category.slug}`);

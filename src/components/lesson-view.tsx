@@ -51,6 +51,50 @@ export function LessonView({ lesson, category }: LessonViewProps) {
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
+
+    const { audioStartTime, audioEndTime } = lesson;
+
+    const handlePlay = () => {
+        if (audioStartTime != null) {
+            // If the current time is outside the allowed segment, reset it to the start.
+            if (audio.currentTime < audioStartTime || (audioEndTime != null && audio.currentTime >= audioEndTime)) {
+                audio.currentTime = audioStartTime;
+            }
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        // If an end time is set and playback goes beyond it, pause the audio.
+        if (audioEndTime != null && audio.currentTime >= audioEndTime) {
+            audio.pause();
+            // Reset to start time for the next play
+            audio.currentTime = audioStartTime ?? 0;
+        }
+    };
+    
+    // Set initial time when the file is ready to be played.
+    const handleLoadedMetadata = () => {
+        if (audioStartTime != null) {
+            audio.currentTime = audioStartTime;
+        }
+    };
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    // Cleanup
+    return () => {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+}, [lesson.audioStartTime, lesson.audioEndTime]);
+
+
+  useEffect(() => {
+    const audio = audioRef.current;
     if (audio && 'mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: lesson.title,
