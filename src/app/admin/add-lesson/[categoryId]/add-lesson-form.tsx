@@ -111,7 +111,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="text-area">متن کامل درس (اختیاری)</Label>
+              <Label htmlFor="text-area">متن کامل درس (روسی)</Label>
               <Textarea
                 id="text-area"
                 name="text"
@@ -121,6 +121,20 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 rows={8}
                 className="resize-none"
               />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="translationFa-area">ترجمه فارسی درس</Label>
+               <Textarea
+                id="translationFa-area"
+                name="translationFa"
+                placeholder="ترجمه کامل و روان فارسی درس را اینجا وارد کنید. اگر خالی بماند، ترجمه با هوش مصنوعی انجام می‌شود."
+                rows={8}
+                className="resize-none"
+                dir="rtl"
+              />
+              <p className="text-sm text-muted-foreground">
+                این ترجمه در تب «Fa» به کاربر نمایش داده می‌شود.
+              </p>
             </div>
             {text && (
               <div className="space-y-2">

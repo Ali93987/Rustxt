@@ -128,7 +128,7 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="text">متن درس</Label>
+              <Label htmlFor="text">متن درس (روسی)</Label>
               <Textarea
                 id="text"
                 name="text"
@@ -137,6 +137,21 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
                 rows={10}
                 className="resize-none"
               />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="translationFa-area">ترجمه فارسی درس</Label>
+              <Textarea
+                id="translationFa-area"
+                name="translationFa"
+                defaultValue={lesson.translationFa || ''}
+                placeholder="ترجمه کامل و روان فارسی درس را اینجا وارد کنید. اگر خالی بماند، ترجمه با هوش مصنوعی انجام می‌شود."
+                rows={10}
+                className="resize-none"
+                dir="rtl"
+              />
+               <p className="text-sm text-muted-foreground">
+                این ترجمه در تب «Fa» به کاربر نمایش داده می‌شود.
+              </p>
             </div>
             {text && (
               <div className="space-y-2">

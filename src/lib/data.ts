@@ -13,6 +13,7 @@ export interface Lesson {
   title: string;
   subtitle: string;
   text: string;
+  translationFa?: string;
   audioSrc: string;
   logoSrc: string;
   logoAiHint: string;

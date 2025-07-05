@@ -38,15 +38,16 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [viewMode, setViewMode] = useState<'ru' | 'fa'>('ru');
-  const [translation, setTranslation] = useState<string>('');
+  const [translation, setTranslation] = useState<string>(lesson.translationFa || '');
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
 
   const handleTabChange = async (value: string) => {
     const mode = value as 'ru' | 'fa';
     setViewMode(mode);
 
-    // Fetch translation only when Fa tab is selected for the first time
-    if (mode === 'fa' && !translation && lesson.text && !isTranslating) {
+    // Fetch translation only if Fa tab is selected for the first time
+    // AND there's no manual translation available.
+    if (mode === 'fa' && !lesson.translationFa && !translation && lesson.text && !isTranslating) {
        setIsTranslating(true);
         try {
           const result = await translateText({

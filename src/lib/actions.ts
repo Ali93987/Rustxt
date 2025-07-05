@@ -135,6 +135,7 @@ const LessonSchema = z.object({
   subtitle: z.string().nullable().optional(),
   logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).nullable().optional(),
   text: z.string().nullable().optional(),
+  translationFa: z.string().nullable().optional(),
   audioSrc: z.string().url({ message: "آدرس اینترنتی فایل صوتی نامعتبر است." }).or(z.literal('')).nullable().optional(),
   vocabulary: z.string().optional(),
 });
@@ -147,6 +148,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
+    translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
     vocabulary: formData.get('vocabulary'),
   });
@@ -157,7 +159,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, text, logoSrc, audioSrc, vocabulary } = validatedFields.data;
+  const { categoryId, title, subtitle, text, translationFa, logoSrc, audioSrc, vocabulary } = validatedFields.data;
   const lessonSlug = slugify(title);
   
   const vocabularyData = vocabulary ? JSON.parse(vocabulary) : {};
@@ -184,6 +186,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       logoSrc: finalLogoSrc,
       logoAiHint: "language lesson",
       text: text || '',
+      translationFa: translationFa || '',
       audioSrc: audioSrc || '',
       vocabulary: vocabularyData,
       createdAt: Timestamp.now(),
@@ -215,6 +218,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
+    translationFa: formData.get('translationFa'),
     audioSrc: formData.get('audioSrc'),
     vocabulary: formData.get('vocabulary'),
   });
@@ -255,6 +259,7 @@ export async function editLessonAction(prevState: any, formData: FormData) {
       slug: newSlug,
       logoSrc: data.logoSrc || 'https://placehold.co/100x100.png',
       text: data.text || '',
+      translationFa: data.translationFa || '',
       audioSrc: data.audioSrc || '',
       vocabulary: vocabularyData,
     });
