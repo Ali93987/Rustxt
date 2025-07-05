@@ -8,7 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit/zod';
+import {z} from 'zod';
 
 // This is the input schema for the public-facing wrapper function.
 // It's more convenient for the caller than passing a JSON string.
