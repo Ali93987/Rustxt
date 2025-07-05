@@ -119,8 +119,9 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-3" align="center" dir="rtl">
                                 {preDefinedTranslation ? (
-                                  <>
-                                    <p className="font-body text-base text-center pb-2">{preDefinedTranslation}</p>
+                                  <div className="space-y-3">
+                                    <p className="font-body text-base text-center">{preDefinedTranslation}</p>
+                                    
                                     {progressEnabled && (
                                       <>
                                         <Separator />
@@ -143,7 +144,21 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                                         </div>
                                       </>
                                     )}
-                                  </>
+
+                                    <Separator />
+                                    <Button asChild size="sm" variant="link" className="w-full text-muted-foreground">
+                                      <a
+                                        href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 justify-center"
+                                      >
+                                        مشاهده در یاندکس
+                                        <ExternalLink className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+
+                                  </div>
                                 ) : (
                                   <Button asChild size="sm">
                                     <a
