@@ -18,7 +18,8 @@ export const TranslateTextPublicInputSchema = z.object({
     .record(z.string())
     .describe(
       'A key-value map of Russian words to their Persian translations to guide the translation.'
-    ),
+    )
+    .optional(),
 });
 export type TranslateTextPublicInput = z.infer<typeof TranslateTextPublicInputSchema>;
 

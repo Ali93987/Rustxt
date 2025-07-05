@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { availableIcons, getCategoryById } from './data';
 import { randomUUID } from 'crypto';
+import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 
 // A more robust slugify function that correctly handles Unicode characters.
 function slugify(text: string): string {
@@ -499,4 +500,48 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     console.error("Error during login:", error);
     return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
   }
+}
+
+// --- Translate Action ---
+const TranslateSchema = z.object({
+    textToTranslate: z.string(),
+});
+
+export async function translateAction(prevState: any, formData: FormData): Promise<{
+  translation: string;
+  message: string;
+}> {
+    const validatedFields = TranslateSchema.safeParse({
+        textToTranslate: formData.get('textToTranslate'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            translation: '',
+            message: 'متن ورودی نامعتبر است.',
+        };
+    }
+    
+    const { textToTranslate } = validatedFields.data;
+
+    if (!textToTranslate.trim()) {
+        return {
+            translation: '',
+            message: '',
+        };
+    }
+
+    try {
+        const result: TranslateTextOutput = await translateText({ text: textToTranslate });
+        return {
+            translation: result.translation,
+            message: '',
+        };
+    } catch (error) {
+        console.error('Translation action failed:', error);
+        return {
+            translation: '',
+            message: 'ترجمه با خطا مواجه شد. لطفاً دوباره تلاش کنید.',
+        };
+    }
 }
