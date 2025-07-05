@@ -65,9 +65,11 @@ export function LessonView({ lesson, category }: LessonViewProps) {
     };
 
     const handleTimeUpdate = () => {
-        // If an end time is set and playback goes beyond it, pause the audio.
-        if (audioEndTime != null && audio.currentTime >= audioEndTime) {
-            audio.pause();
+        // If an end time is set and playback goes beyond it, loop back to the start time.
+        // This creates a loop within the specified range.
+        if (audioEndTime != null && audioEndTime > 0 && audioStartTime != null && audio.currentTime >= audioEndTime) {
+            audio.currentTime = audioStartTime;
+            audio.play();
         }
     };
     
