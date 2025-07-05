@@ -14,7 +14,6 @@ function slugify(text: string): string {
   return text
     .toString()
     .trim()
-    .toLowerCase()
     // 1. Replace spaces and common punctuation with a hyphen.
     .replace(/[\s_.,!?;:"()']+/g, '-')
     // 2. Remove any character that is not a letter from any language, a number, or a hyphen.
