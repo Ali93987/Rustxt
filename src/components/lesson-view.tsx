@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Check, CirclePlay, RotateCcw } from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
 type SerializableLesson = Omit<Lesson, 'createdAt'>;
@@ -54,7 +53,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const wordsAndSeparators = lesson.text ? lesson.text.split(/([ \n\t]+)/) : [];
 
   return (
-    <TooltipProvider delayDuration={100}>
+    <>
       {/* Lesson Text */}
       {lesson.text && (
         <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md bg-muted/30">
@@ -64,16 +63,16 @@ export function LessonView({ lesson, category }: LessonViewProps) {
 
             if (translation) {
               return (
-                <Tooltip key={index}>
-                  <TooltipTrigger asChild>
+                <Popover key={index}>
+                  <PopoverTrigger asChild>
                     <span className="cursor-pointer">
                       {segment}
                     </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2">
                     <p className="font-body text-base">{translation}</p>
-                  </TooltipContent>
-                </Tooltip>
+                  </PopoverContent>
+                </Popover>
               );
             }
             return <span key={index}>{segment}</span>;
@@ -124,6 +123,6 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           </Button>
         </div>
       </div>
-    </TooltipProvider>
+    </>
   );
 }
