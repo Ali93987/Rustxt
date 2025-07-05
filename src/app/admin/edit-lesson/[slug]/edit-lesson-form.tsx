@@ -20,7 +20,7 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
   const [subtitle, setSubtitle] = useState(lesson.subtitle);
   const [logoSrc, setLogoSrc] = useState(lesson.logoSrc);
   const [text, setText] = useState(lesson.text);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioSrc, setAudioSrc] = useState(lesson.audioSrc);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,9 +62,8 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
               <Label htmlFor="subtitle">زیرنویس (توضیح کوتاه)</Label>
               <Input
                 id="subtitle"
-                value={subtitle}
+                value={subtitle || ''}
                 onChange={(e) => setSubtitle(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">
@@ -82,9 +81,8 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
               )}
               <Input
                 id="logoSrc"
-                value={logoSrc}
+                value={logoSrc || ''}
                 onChange={(e) => setLogoSrc(e.target.value)}
-                required
                 dir="ltr"
               />
                <p className="text-sm text-muted-foreground">
@@ -95,25 +93,24 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
               <Label htmlFor="text">متن درس</Label>
               <Textarea
                 id="text"
-                value={text}
+                value={text || ''}
                 onChange={(e) => setText(e.target.value)}
-                required
                 rows={10}
                 className="resize-none"
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="audio">فایل صوتی</Label>
+              <Label htmlFor="audioSrc">آدرس اینترنتی فایل صوتی</Label>
               <Input
-                id="audio"
-                type="file"
-                accept="audio/*"
-                onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)}
+                id="audioSrc"
+                type="text"
+                dir="ltr"
+                placeholder="https://example.com/audio.mp3"
+                value={audioSrc || ''}
+                onChange={(e) => setAudioSrc(e.target.value)}
               />
               <p className="text-sm text-muted-foreground">
-                فایل صوتی فعلی: <code className="dir-ltr">{lesson.audioSrc}</code>
-                <br/>
-                برای تغییر، فایل جدید را بارگذاری کنید. برای حذف فایل صوتی، کافیست فرم را بدون انتخاب فایل جدید ذخیره کنید (این قابلیت نمایشی است).
+                آدرس کامل فایل صوتی را وارد کنید. برای حذف، این فیلد را خالی بگذارید (این قابلیت نمایشی است).
               </p>
             </div>
           </CardContent>

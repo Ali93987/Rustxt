@@ -3,8 +3,7 @@
 
 import { z } from 'zod';
 import { addDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './firebase';
+import { db } from './firebase';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { availableIcons, getCategoryById } from './data';
@@ -84,23 +83,19 @@ const LessonSchema = z.object({
   subtitle: z.string().nullable().optional(),
   logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).nullable().optional(),
   text: z.string().nullable().optional(),
-  logoFile: z.instanceof(File).nullable().optional(),
-  audio: z.instanceof(File).optional(),
+  audioSrc: z.string().url({ message: "آدرس اینترنتی فایل صوتی نامعتبر است." }).or(z.literal('')).nullable().optional(),
 });
 
 
 export async function addLessonAction(prevState: any, formData: FormData) {
-  const rawData = {
+  const validatedFields = LessonSchema.safeParse({
     categoryId: formData.get('categoryId'),
     title: formData.get('title'),
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
-    logoFile: formData.get('logoFile'),
-    audio: formData.get('audio'),
-  };
-
-  const validatedFields = LessonSchema.safeParse(rawData);
+    audioSrc: formData.get('audioSrc'),
+  });
 
   if (!validatedFields.success) {
     const errorMessage = validatedFields.error.errors.map(e => e.message).join(' ');
@@ -108,11 +103,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, text } = validatedFields.data;
-  const urlLogoSrc = validatedFields.data.logoSrc;
-  const logoFile = validatedFields.data.logoFile;
-  const audioFile = validatedFields.data.audio;
-  
+  const { categoryId, title, subtitle, text, logoSrc, audioSrc } = validatedFields.data;
   const lessonSlug = slugify(title);
 
   try {
@@ -128,44 +119,10 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       return { message: 'درسی با این عنوان در این دسته‌بندی وجود دارد.', success: false };
     }
     
-    // --- Logo Handling Logic ---
-    let finalLogoSrc = '';
+    // Use the provided logoSrc or fallback to a placeholder
+    const finalLogoSrc = logoSrc || 'https://placehold.co/100x100.png';
     
-    // 1. Prioritize file upload
-    if (logoFile && logoFile.size > 0) {
-      if (!logoFile.type.startsWith('image/')) {
-        return { message: 'فایل لوگو باید از نوع تصویر باشد.', success: false };
-      }
-      const logoBuffer = Buffer.from(await logoFile.arrayBuffer());
-      const logoFileName = `${Date.now()}-${lessonSlug}-${logoFile.name}`;
-      const logoStorageRef = ref(storage, `lessons_logos/${logoFileName}`);
-      await uploadBytes(logoStorageRef, logoBuffer, { contentType: logoFile.type });
-      finalLogoSrc = await getDownloadURL(logoStorageRef);
-    } 
-    // 2. Fallback to URL if provided
-    else if (urlLogoSrc) {
-      finalLogoSrc = urlLogoSrc;
-    } 
-    // 3. Fallback to placeholder
-    else {
-      finalLogoSrc = 'https://placehold.co/100x100.png';
-    }
-    
-    // --- Audio Handling Logic ---
-    let audioSrc = '';
-    if (audioFile && audioFile.size > 0) {
-      if (!audioFile.type.startsWith('audio/')) {
-        return { message: 'فایل انتخاب شده باید از نوع صوتی باشد.', success: false };
-      }
-      
-      const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
-      const audioFileName = `${Date.now()}-${lessonSlug}-${audioFile.name}`;
-      const storageRef = ref(storage, `lessons_audio/${audioFileName}`);
-      await uploadBytes(storageRef, audioBuffer, { contentType: audioFile.type });
-      audioSrc = await getDownloadURL(storageRef);
-    }
-    
-    // 3. Add lesson data to Firestore
+    // Add lesson data to Firestore
     await addDoc(lessonCollectionRef, {
       title,
       subtitle: subtitle || '',
@@ -173,11 +130,11 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       logoSrc: finalLogoSrc,
       logoAiHint: "language lesson", // A default hint for AI image generation later
       text: text || '',
-      audioSrc,
+      audioSrc: audioSrc || '',
       createdAt: Timestamp.now(),
     });
     
-    // 4. Revalidate and redirect
+    // Revalidate and redirect
     revalidatePath('/admin/dashboard');
     revalidatePath(`/category/${category.slug}`);
     revalidatePath('/');

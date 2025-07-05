@@ -2,7 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useActionState } from 'react';
 import type { Category } from '@/lib/data';
 
 import { addLessonAction } from '@/lib/actions';
@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const initialState = {
   message: '',
@@ -31,7 +30,6 @@ function SubmitButton() {
 export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 'title'> }) {
   const { toast } = useToast();
   const [state, formAction] = useActionState(addLessonAction, initialState);
-  const [logoSource, setLogoSource] = useState<'url' | 'upload'>('url');
 
   useEffect(() => {
     if (state?.message && !state.success) {
@@ -49,7 +47,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
         <CardHeader>
           <CardTitle className="text-2xl font-headline">افزودن درس جدید به دسته‌بندی «{category.title}»</CardTitle>
           <CardDescription>
-            اطلاعات درس جدید را وارد کنید. فقط عنوان درس اجباری است.
+            اطلاعات درس جدید را وارد کنید. فقط عنوان درس اجباری است. برای فایل‌های صوتی و لوگو، باید آدرس اینترنتی (URL) آن‌ها را وارد کنید.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
@@ -66,47 +64,18 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 </div>
             </div>
             <div className="space-y-2">
-                <Label>لوگو درس (اختیاری)</Label>
-                <RadioGroup
-                    value={logoSource}
-                    onValueChange={(value) => setLogoSource(value as 'url' | 'upload')}
-                    className="flex items-center space-x-4 space-x-reverse py-2"
-                >
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <RadioGroupItem value="url" id="logo-url" />
-                        <Label htmlFor="logo-url">آدرس اینترنتی (URL)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <RadioGroupItem value="upload" id="logo-upload" />
-                        <Label htmlFor="logo-upload">بارگذاری از دستگاه</Label>
-                    </div>
-                </RadioGroup>
-
-                {logoSource === 'url' ? (
-                    <div className="space-y-1">
-                        <Input
-                            id="logoSrc"
-                            name="logoSrc"
-                            placeholder="https://placehold.co/100x100.png"
-                            dir="ltr"
-                        />
-                        <p className="text-sm text-muted-foreground">
-                            آدرس کامل تصویر را وارد کنید. اگر خالی بماند، از تصویر پیش‌فرض استفاده می‌شود.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-1">
-                        <Input
-                            id="logoFile"
-                            name="logoFile"
-                            type="file"
-                            accept="image/*"
-                        />
-                         <p className="text-sm text-muted-foreground">
-                            یک تصویر از دستگاه خود انتخاب کنید (PNG, JPG, ...).
-                        </p>
-                    </div>
-                )}
+                <Label htmlFor="logoSrc">آدرس اینترنتی لوگو (اختیاری)</Label>
+                <div className="space-y-1">
+                    <Input
+                        id="logoSrc"
+                        name="logoSrc"
+                        placeholder="https://placehold.co/100x100.png"
+                        dir="ltr"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                        آدرس کامل تصویر را وارد کنید. اگر خالی بماند، از تصویر پیش‌فرض استفاده می‌شود.
+                    </p>
+                </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="text">متن کامل درس (اختیاری)</Label>
@@ -119,15 +88,16 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="audio">فایل صوتی درس (اختیاری)</Label>
+              <Label htmlFor="audioSrc">آدرس اینترنتی فایل صوتی (اختیاری)</Label>
               <Input
-                id="audio"
-                name="audio"
-                type="file"
-                accept="audio/*"
+                id="audioSrc"
+                name="audioSrc"
+                type="text"
+                placeholder="https://example.com/audio.mp3"
+                dir="ltr"
               />
                <p className="text-sm text-muted-foreground">
-                فایل صوتی با فرمت MP3 یا M4A توصیه می‌شود.
+                آدرس کامل فایل صوتی (مثلاً MP3) را وارد کنید.
               </p>
             </div>
           </CardContent>
