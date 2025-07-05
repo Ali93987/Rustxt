@@ -25,9 +25,11 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>مدیریت محتوا</CardTitle>
-            <Button>
-              <PlusCircle className="ml-2 h-4 w-4" />
-              افزودن دسته‌بندی
+            <Button asChild>
+              <Link href="/admin/add-category">
+                <PlusCircle className="ml-2 h-4 w-4" />
+                افزودن دسته‌بندی
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>
