@@ -130,9 +130,9 @@ export async function editCategoryAction(prevState: any, formData: FormData) {
     redirect('/admin/dashboard');
 }
 
-// --- Add Lesson Action ---
+// --- Lesson Schemas ---
 
-const LessonSchema = z.object({
+const BaseLessonSchema = z.object({
   categoryId: z.string().min(1, 'شناسه دسته‌بندی الزامی است.'),
   title: z.string().min(1, { message: 'عنوان درس الزامی است.' }),
   subtitle: z.string().nullable().optional(),
@@ -144,17 +144,29 @@ const LessonSchema = z.object({
   audioStartTime: z.coerce.number().optional().nullable(),
   audioEndTime: z.coerce.number().optional().nullable(),
   vocabulary: z.string().optional(),
-}).refine((data) => {
+});
+
+const audioTimeRefinement = (data: { audioStartTime?: number | null, audioEndTime?: number | null }) => {
     if (data.audioStartTime != null && data.audioEndTime != null) {
         return data.audioEndTime > data.audioStartTime;
     }
     return true;
-}, {
+};
+
+const LessonSchema = BaseLessonSchema.refine(audioTimeRefinement, {
+    message: "زمان پایان باید بعد از زمان شروع باشد.",
+    path: ["audioEndTime"],
+});
+
+const EditLessonSchema = BaseLessonSchema.extend({
+  lessonId: z.string().min(1, 'شناسه درس الزامی است.'),
+}).refine(audioTimeRefinement, {
     message: "زمان پایان باید بعد از زمان شروع باشد.",
     path: ["audioEndTime"],
 });
 
 
+// --- Add Lesson Action ---
 export async function addLessonAction(prevState: any, formData: FormData) {
   const validatedFields = LessonSchema.safeParse({
     categoryId: formData.get('categoryId'),
@@ -228,11 +240,6 @@ export async function addLessonAction(prevState: any, formData: FormData) {
 }
 
 // --- Edit Lesson Action ---
-
-const EditLessonSchema = LessonSchema.extend({
-  lessonId: z.string().min(1, 'شناسه درس الزامی است.'),
-});
-
 export async function editLessonAction(prevState: any, formData: FormData) {
   const validatedFields = EditLessonSchema.safeParse({
     lessonId: formData.get('lessonId'),
@@ -291,8 +298,16 @@ export async function editLessonAction(prevState: any, formData: FormData) {
       vocabulary: vocabularyData,
     };
     
-    if (data.audioStartTime != null) dataToUpdate.audioStartTime = data.audioStartTime;
-    if (data.audioEndTime != null) dataToUpdate.audioEndTime = data.audioEndTime;
+    if (data.audioStartTime != null) {
+      dataToUpdate.audioStartTime = data.audioStartTime;
+    } else {
+      dataToUpdate.audioStartTime = null;
+    }
+    if (data.audioEndTime != null) {
+      dataToUpdate.audioEndTime = data.audioEndTime;
+    } else {
+      dataToUpdate.audioEndTime = null;
+    }
 
 
     await updateDoc(lessonDocRef, dataToUpdate);
