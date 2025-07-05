@@ -43,7 +43,7 @@ export function UserStatus() {
         <DropdownMenuContent align="end" className="w-48">
            <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
            <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
             <LogOut className="ml-2 h-4 w-4" />
             <span>خروج</span>
           </DropdownMenuItem>
