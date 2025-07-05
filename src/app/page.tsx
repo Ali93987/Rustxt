@@ -3,7 +3,6 @@ import { getCategories } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { UserStatus } from '@/components/user-status';
-import { ArrowLeftRight } from 'lucide-react';
 
 export default async function Home() {
   const categories = await getCategories();
@@ -28,12 +27,6 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg">
                 سفر خود را برای صحبت کردن به زبان روسی از اینجا شروع کنید.
             </p>
-            <Button asChild size="lg" className="mt-6">
-                <Link href="/translate">
-                    <ArrowLeftRight className="ml-2 h-5 w-5" />
-                    رفتن به مترجم آنلاین
-                </Link>
-            </Button>
         </div>
         <CategoryList categories={categories} />
       </main>

@@ -37,6 +37,7 @@ export interface User {
   username: string;
   email: string;
   password?: string; // Stored in DB, but shouldn't be sent to client.
+  activeSessionToken?: string;
   createdAt?: Timestamp;
 }
 

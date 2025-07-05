@@ -8,22 +8,18 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { availableIcons, getCategoryById } from './data';
 import { randomUUID } from 'crypto';
-import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 
 // A more robust slugify function that correctly handles Unicode characters.
 function slugify(text: string): string {
   return text
     .toString()
+    .normalize('NFD') // Split accents from letters
+    .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
+    .toLowerCase()
     .trim()
-    // 1. Replace spaces and common punctuation with a hyphen.
-    .replace(/[\s_.,!?;:"()']+/g, '-')
-    // 2. Remove any character that is not a letter from any language, a number, or a hyphen.
-    //    The 'u' flag enables Unicode mode for the regex.
-    .replace(/[^\p{L}\p{N}-]/gu, '')
-    // 3. Replace multiple hyphens with a single hyphen.
-    .replace(/--+/g, '-')
-    // 4. Trim leading/trailing hyphens.
-    .replace(/^-+|-+$/g, '');
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-'); // Replace multiple - with single -
 }
 
 const CategorySchema = z.object({
@@ -458,6 +454,7 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     return {
       message: validatedFields.error.errors.map(e => e.message).join(', '),
       success: false,
+      user: null,
     };
   }
   
@@ -468,14 +465,14 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
+      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false, user: null };
     }
 
     const userDoc = querySnapshot.docs[0];
     const userData = userDoc.data();
 
     if (userData.password !== password) {
-      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
+      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false, user: null };
     }
 
     // Generate a new session token
@@ -489,6 +486,7 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     // On successful login, return user data with the session token
     return {
       success: true,
+      message: 'ورود موفقیت‌آمیز',
       user: {
         id: userDoc.id,
         username: userData.username,
@@ -498,50 +496,6 @@ export async function loginUserAction(prevState: any, formData: FormData) {
 
   } catch (error) {
     console.error("Error during login:", error);
-    return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
+    return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false, user: null };
   }
-}
-
-// --- Translate Action ---
-const TranslateSchema = z.object({
-    textToTranslate: z.string(),
-});
-
-export async function translateAction(prevState: any, formData: FormData): Promise<{
-  translation: string;
-  message: string;
-}> {
-    const validatedFields = TranslateSchema.safeParse({
-        textToTranslate: formData.get('textToTranslate'),
-    });
-
-    if (!validatedFields.success) {
-        return {
-            translation: '',
-            message: 'متن ورودی نامعتبر است.',
-        };
-    }
-    
-    const { textToTranslate } = validatedFields.data;
-
-    if (!textToTranslate.trim()) {
-        return {
-            translation: '',
-            message: '',
-        };
-    }
-
-    try {
-        const result: TranslateTextOutput = await translateText({ text: textToTranslate });
-        return {
-            translation: result.translation,
-            message: '',
-        };
-    } catch (error) {
-        console.error('Translation action failed:', error);
-        return {
-            translation: '',
-            message: 'ترجمه با خطا مواجه شد. لطفاً دوباره تلاش کنید.',
-        };
-    }
 }

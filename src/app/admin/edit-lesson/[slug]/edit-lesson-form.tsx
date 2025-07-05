@@ -189,7 +189,7 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
                           className={cn(
                             'cursor-pointer transition-colors duration-200 rounded-sm p-0.5',
                             {
-                              'bg-primary/20 hover:bg-primary/30 font-semibold': hasTranslation,
+                              'bg-primary/20 hover:bg-primary/30 text-primary-foreground font-semibold': hasTranslation,
                               'hover:bg-accent/50': !hasTranslation
                             }
                           )}
