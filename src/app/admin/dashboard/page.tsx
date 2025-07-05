@@ -88,9 +88,11 @@ export default async function AdminDashboardPage() {
                         </div>
                        )}
                        <div className="text-right mt-4">
-                          <Button variant="outline">
-                            <PlusCircle className="ml-2 h-4 w-4" />
-                            افزودن درس جدید
+                          <Button asChild variant="outline">
+                            <Link href={`/admin/add-lesson/${category.id}`}>
+                              <PlusCircle className="ml-2 h-4 w-4" />
+                              افزودن درس جدید
+                            </Link>
                           </Button>
                         </div>
                     </AccordionContent>

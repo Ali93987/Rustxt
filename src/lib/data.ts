@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { LucideIcon } from 'lucide-react';
-import { collection, getDocs, getDoc, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BookHeart, BookCheck, Feather, LibraryBig, Milestone, Drama } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export interface Lesson {
   audioSrc: string;
   logoSrc: string;
   logoAiHint: string;
+  createdAt?: Timestamp;
 }
 
 export interface Category {
@@ -50,21 +51,22 @@ export const availableIcons = Object.keys(iconMap);
 export async function getCategories(): Promise<Category[]> {
   try {
     const categoriesCollection = collection(db, 'categories');
-    // Order by creation time to keep a consistent order
     const q = query(categoriesCollection, orderBy('createdAt', 'asc'));
     const categorySnapshot = await getDocs(q);
 
-    // Using Promise.all to fetch all lessons for all categories in parallel
     const categoriesList = await Promise.all(categorySnapshot.docs.map(async (categoryDoc) => {
       const categoryData = {
         id: categoryDoc.id,
         ...categoryDoc.data(),
       } as Category;
 
-      // In this version, we assume lessons might be a subcollection
-      // For now, we'll return an empty array for simplicity.
-      // This can be expanded later.
-      categoryData.lessons = [];
+      const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
+      const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
+      const lessonsSnapshot = await getDocs(lessonsQuery);
+      categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => ({
+          id: lessonDoc.id,
+          ...lessonDoc.data(),
+      } as Lesson));
 
       return categoryData;
     }));
@@ -72,7 +74,6 @@ export async function getCategories(): Promise<Category[]> {
     return categoriesList;
   } catch (error) {
     console.error("Error fetching categories: ", error);
-    // In a real app, you might want to show an error page
     return [];
   }
 }
@@ -92,9 +93,9 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
       ...categoryDoc.data(),
     } as Category;
     
-    // Fetch lessons for this category from the subcollection
     const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
-    const lessonsSnapshot = await getDocs(lessonsCollection);
+    const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
+    const lessonsSnapshot = await getDocs(lessonsQuery);
     categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => ({
         id: lessonDoc.id,
         ...lessonDoc.data(),
@@ -108,25 +109,52 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
   }
 }
 
+export async function getCategoryById(id: string): Promise<Category | undefined> {
+  try {
+    const categoryDocRef = doc(db, 'categories', id);
+    const categoryDoc = await getDoc(categoryDocRef);
+
+    if (!categoryDoc.exists()) {
+      return undefined;
+    }
+
+    const categoryData = {
+      id: categoryDoc.id,
+      ...categoryDoc.data(),
+    } as Category;
+    
+    categoryData.lessons = []; // Lessons not needed for this helper's current use case.
+    
+    return categoryData;
+
+  } catch (error) {
+    console.error(`Error fetching category with id ${id}:`, error);
+    return undefined;
+  }
+}
+
+
 export async function getLessonAndCategory(
   lessonSlug: string
 ): Promise<{ lesson: Lesson; category: Category } | undefined> {
-  // This is not the most efficient way for large datasets, but works for this app.
-  // A better schema might be a root-level `lessons` collection.
-  const allCategories = await getCategories();
-  for (const category of allCategories) {
-    // We must fetch lessons for each category to find the lesson
-    const lessonsCollection = collection(db, `categories/${category.id}/lessons`);
-    const q = query(lessonsCollection, where('slug', '==', lessonSlug));
-    const lessonSnapshot = await getDocs(q);
+  try {
+    const categoriesSnapshot = await getDocs(collection(db, 'categories'));
 
-    if (!lessonSnapshot.empty) {
-      const lessonDoc = lessonSnapshot.docs[0];
-      const lesson = { id: lessonDoc.id, ...lessonDoc.data() } as Lesson;
-      // We found the lesson, return it with its parent category
-      return { lesson, category };
+    for (const categoryDoc of categoriesSnapshot.docs) {
+      const lessonsCollectionRef = collection(db, `categories/${categoryDoc.id}/lessons`);
+      const q = query(lessonsCollectionRef, where('slug', '==', lessonSlug));
+      const lessonSnapshot = await getDocs(q);
+
+      if (!lessonSnapshot.empty) {
+        const lessonDoc = lessonSnapshot.docs[0];
+        const lesson = { id: lessonDoc.id, ...lessonDoc.data() } as Lesson;
+        const category = { id: categoryDoc.id, ...categoryDoc.data() } as Category;
+        category.lessons = []; 
+        return { lesson, category };
+      }
     }
+  } catch(error) {
+     console.error(`Error fetching lesson with slug ${lessonSlug}:`, error);
   }
-
   return undefined;
 }
