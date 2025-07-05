@@ -81,9 +81,9 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
 const LessonSchema = z.object({
   categoryId: z.string().min(1, 'شناسه دسته‌بندی الزامی است.'),
   title: z.string().min(1, { message: 'عنوان درس الزامی است.' }),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable().optional(),
   logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).nullable().optional(),
-  text: z.string().optional(),
+  text: z.string().nullable().optional(),
   logoFile: z.instanceof(File).nullable().optional(),
   audio: z.instanceof(File).optional(),
 });
@@ -104,6 +104,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     const errorMessage = validatedFields.error.errors.map(e => e.message).join(' ');
+    console.error("Validation error:", validatedFields.error);
     return { message: errorMessage, success: false };
   }
   
@@ -154,7 +155,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     let audioSrc = '';
     if (audioFile && audioFile.size > 0) {
       if (!audioFile.type.startsWith('audio/')) {
-        return { message: 'فайл انتخاب شده باید از نوع صوتی باشد.', success: false };
+        return { message: 'فایل انتخاب شده باید از نوع صوتی باشد.', success: false };
       }
       
       const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
