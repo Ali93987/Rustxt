@@ -147,12 +147,12 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                                 ) : (
                                   <Button asChild size="sm">
                                     <a
-                                      href={`https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(normalized)}&op=translate`}
+                                      href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-2"
                                     >
-                                      ترجمه با گوگل
+                                      ترجمه با یاندکس
                                       <ExternalLink className="h-4 w-4" />
                                     </a>
                                   </Button>
