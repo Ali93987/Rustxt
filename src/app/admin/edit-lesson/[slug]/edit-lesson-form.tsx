@@ -2,7 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import type { Lesson } from '@/lib/data';
 import { editLessonAction } from '@/lib/actions';
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Slider } from '@/components/ui/slider';
 
 const initialState = {
   message: '',
@@ -44,6 +45,20 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
   const [selectedWord, setSelectedWord] = useState('');
   const [currentTranslation, setCurrentTranslation] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // State for audio trimmer
+  const [audioSrc, setAudioSrc] = useState(lesson.audioSrc || '');
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [timeRange, setTimeRange] = useState<[number, number]>([lesson.audioStartTime ?? 0, lesson.audioEndTime ?? 0]);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
 
   useEffect(() => {
     if (state?.message && !state.success) {
@@ -54,6 +69,33 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
       });
     }
   }, [state, toast]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      const handleLoadedMetadata = () => {
+        const duration = audio.duration;
+        if (isFinite(duration)) {
+          setAudioDuration(duration);
+          // On edit, if end time is 0 or not set, it means it should be the full duration.
+          const endTime = lesson.audioEndTime ?? duration;
+          if (timeRange[1] === 0 || timeRange[1] > duration) {
+             setTimeRange([lesson.audioStartTime ?? 0, endTime]);
+          }
+        }
+      };
+      
+      if (audio.readyState >= 1) {
+          handleLoadedMetadata();
+      }
+
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+    }
+  }, [audioSrc, lesson.audioStartTime, lesson.audioEndTime]);
+
 
   const handleWordClick = (word: string) => {
     const normalized = normalizeWord(word);
@@ -206,19 +248,49 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
               </div>
             )}
              <div className="space-y-2">
-              <Label htmlFor="audioSrc">آدرس اینترنتی فایل صوتی</Label>
-              <Input
-                id="audioSrc"
-                name="audioSrc"
-                type="text"
-                dir="ltr"
-                placeholder="https://example.com/audio.mp3"
-                defaultValue={lesson.audioSrc || ''}
-              />
-              <p className="text-sm text-muted-foreground">
-                آدرس کامل فایل صوتی را وارد کنید.
-              </p>
+                <Label htmlFor="audioSrc">آدرس اینترنتی فایل صوتی</Label>
+                <Input
+                    id="audioSrc"
+                    name="audioSrc"
+                    type="text"
+                    dir="ltr"
+                    placeholder="https://example.com/audio.mp3"
+                    value={audioSrc}
+                    onChange={(e) => {
+                        setAudioSrc(e.target.value);
+                        setAudioDuration(0);
+                        setTimeRange([0, 0]);
+                    }}
+                />
+                 <p className="text-sm text-muted-foreground">
+                    آدرس کامل فایل صوتی را وارد کنید.
+                </p>
             </div>
+
+            {audioSrc && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <audio ref={audioRef} src={audioSrc} controls className="w-full" preload="metadata" />
+                    {audioDuration > 0 && (
+                        <div className="space-y-2 pt-2">
+                            <Label>برش فایل صوتی</Label>
+                            <Slider
+                                value={timeRange}
+                                onValueChange={(newRange) => setTimeRange(newRange as [number, number])}
+                                max={audioDuration}
+                                step={0.1}
+                            />
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>شروع: {formatTime(timeRange[0])}</span>
+                                <span>پایان: {formatTime(timeRange[1])}</span>
+                            </div>
+                             <p className="text-xs text-muted-foreground pt-2">
+                                با استفاده از دستگیره‌ها، بخش مورد نظر برای پخش را انتخاب کنید.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+            
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="audioStartTime">زمان شروع پخش (ثانیه)</Label>
@@ -226,9 +298,10 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
                         id="audioStartTime"
                         name="audioStartTime"
                         type="number"
-                        placeholder="مثلا: 180"
+                        placeholder="0"
                         min="0"
-                        defaultValue={lesson.audioStartTime ?? ''}
+                        value={Math.round(timeRange[0])}
+                        onChange={e => setTimeRange([Number(e.target.value), timeRange[1]])}
                     />
                 </div>
                 <div className="space-y-2">
@@ -237,14 +310,15 @@ export function EditLessonForm({ lesson, categoryId }: { lesson: Lesson; categor
                         id="audioEndTime"
                         name="audioEndTime"
                         type="number"
-                        placeholder="مثلا: 480"
+                        placeholder={audioDuration ? Math.round(audioDuration).toString() : "0"}
                         min="0"
-                        defaultValue={lesson.audioEndTime ?? ''}
+                        value={Math.round(timeRange[1])}
+                        onChange={e => setTimeRange([timeRange[0], Number(e.target.value)])}
                     />
                 </div>
             </div>
             <p className="text-sm text-muted-foreground -mt-2">
-                برای پخش بخشی از فایل صوتی، زمان شروع و پایان را به ثانیه وارد کنید. اگر خالی بماند، کل فایل پخش می‌شود.
+                برای پخش بخشی از فایل صوتی، زمان شروع و پایان را به ثانیه وارد کنید یا از دستگیره‌های بالا استفاده کنید. اگر خالی بماند، کل فایل پخش می‌شود.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
