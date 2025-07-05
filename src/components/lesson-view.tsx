@@ -117,87 +117,86 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                 <TabsTrigger value="ru">متن اصلی (Ru)</TabsTrigger>
                 <TabsTrigger value="fa">ترجمه (Fa)</TabsTrigger>
                 </TabsList>
-            </Tabs>
-            
-            <TabsContent value="ru" className="mt-0">
-                 <div
-                    className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-left"
-                    dir="ltr"
-                 >
-                    {wordsAndSeparators.map((segment, index) => {
-                    const normalized = normalizeWord(segment);
-                    const translation = normalized && lesson.vocabulary?.[normalized];
+                <TabsContent value="ru" className="mt-0">
+                    <div
+                        className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-left"
+                        dir="ltr"
+                    >
+                        {wordsAndSeparators.map((segment, index) => {
+                        const normalized = normalizeWord(segment);
+                        const translation = normalized && lesson.vocabulary?.[normalized];
 
-                    if (translation && progressEnabled) {
-                    return (
-                        <Popover key={index}>
-                        <PopoverTrigger asChild>
-                            <span
-                            className={cn(
-                                "cursor-pointer rounded-sm p-0.5 transition-colors duration-200",
-                                isWordKnown(normalized) ? "bg-primary/20 text-primary-foreground font-semibold" : "hover:bg-accent/50"
-                            )}
-                            >
-                            {segment}
-                            </span>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-3" align="center" dir="rtl">
-                            <p className="font-body text-base text-center pb-2">{translation}</p>
-                            <Separator />
-                            <div className="flex justify-around pt-2 gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setWordKnownState(normalized, false)}
-                            >
-                                نمیدانم
-                                <ThumbsDown className="mr-2 h-4 w-4" />
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={() => setWordKnownState(normalized, true)}
-                            >
-                                میدانم
-                                <ThumbsUp className="mr-2 h-4 w-4" />
-                            </Button>
-                            </div>
-                        </PopoverContent>
-                        </Popover>
-                    );
-                    } else if (translation) { // For non-logged in users
+                        if (translation && progressEnabled) {
                         return (
-                             <Popover key={index}>
-                                <PopoverTrigger asChild>
-                                    <span className="cursor-pointer rounded-sm p-0.5 transition-colors duration-200 hover:bg-accent/50">
-                                    {segment}
-                                    </span>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-3" align="center" dir="rtl">
-                                    <p className="font-body text-base text-center">{translation}</p>
-                                </PopoverContent>
+                            <Popover key={index}>
+                            <PopoverTrigger asChild>
+                                <span
+                                className={cn(
+                                    "cursor-pointer rounded-sm p-0.5 transition-colors duration-200",
+                                    isWordKnown(normalized) ? "bg-primary/20 text-primary-foreground font-semibold" : "hover:bg-accent/50"
+                                )}
+                                >
+                                {segment}
+                                </span>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-3" align="center" dir="rtl">
+                                <p className="font-body text-base text-center pb-2">{translation}</p>
+                                <Separator />
+                                <div className="flex justify-around pt-2 gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setWordKnownState(normalized, false)}
+                                >
+                                    نمیدانم
+                                    <ThumbsDown className="mr-2 h-4 w-4" />
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setWordKnownState(normalized, true)}
+                                >
+                                    میدانم
+                                    <ThumbsUp className="mr-2 h-4 w-4" />
+                                </Button>
+                                </div>
+                            </PopoverContent>
                             </Popover>
-                        )
-                    }
-                    return <span key={index}>{segment}</span>;
-                    })}
-                 </div>
-            </TabsContent>
-            <TabsContent value="fa" className="mt-0">
-                <div
-                    className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-right"
-                    dir="rtl"
-                >
-                    {isTranslating ? (
-                    <div className="space-y-3 p-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-[90%]" />
-                    <Skeleton className="h-4 w-[95%]" />
+                        );
+                        } else if (translation) { // For non-logged in users
+                            return (
+                                <Popover key={index}>
+                                    <PopoverTrigger asChild>
+                                        <span className="cursor-pointer rounded-sm p-0.5 transition-colors duration-200 hover:bg-accent/50">
+                                        {segment}
+                                        </span>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-3" align="center" dir="rtl">
+                                        <p className="font-body text-base text-center">{translation}</p>
+                                    </PopoverContent>
+                                </Popover>
+                            )
+                        }
+                        return <span key={index}>{segment}</span>;
+                        })}
                     </div>
-                ) : (
-                    <p>{translation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
-                )}
-                </div>
-            </TabsContent>
+                </TabsContent>
+                <TabsContent value="fa" className="mt-0">
+                    <div
+                        className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-right"
+                        dir="rtl"
+                    >
+                        {isTranslating ? (
+                        <div className="space-y-3 p-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-[90%]" />
+                        <Skeleton className="h-4 w-[95%]" />
+                        </div>
+                    ) : (
+                        <p>{translation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
+                    )}
+                    </div>
+                </TabsContent>
+            </Tabs>
          </div>
       )}
 
