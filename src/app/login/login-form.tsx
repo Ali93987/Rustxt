@@ -53,12 +53,12 @@ export function LoginForm() {
         <form action={formAction}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">ایمیل</Label>
+              <Label htmlFor="identifier">ایمیل یا نام کاربری</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="user@example.com"
+                id="identifier"
+                name="identifier"
+                type="text"
+                placeholder="user@example.com یا myusername"
                 required
                 dir="ltr"
               />

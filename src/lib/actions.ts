@@ -412,13 +412,13 @@ export async function deleteUserAction(userId: string): Promise<{ message: strin
 
 // --- User Login Action ---
 const LoginSchema = z.object({
-  email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
+  identifier: z.string().min(1, { message: 'ایمیل یا نام کاربری الزامی است.' }),
   password: z.string().min(1, { message: 'رمز عبور الزامی است.' }),
 });
 
 export async function loginUserAction(prevState: any, formData: FormData) {
   const validatedFields = LoginSchema.safeParse({
-    email: formData.get('email'),
+    identifier: formData.get('identifier'),
     password: formData.get('password'),
   });
 
@@ -429,14 +429,17 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     };
   }
   
-  const { email, password } = validatedFields.data;
+  const { identifier, password } = validatedFields.data;
 
   try {
-    const q = query(collection(db, 'users'), where('email', '==', email));
+    const isEmail = identifier.includes('@');
+    const queryField = isEmail ? 'email' : 'username';
+
+    const q = query(collection(db, 'users'), where(queryField, '==', identifier));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { message: 'کاربری با این ایمیل یافت نشد.', success: false };
+      return { message: 'ایمیل یا نام کاربری یافت نشد.', success: false };
     }
 
     // This is a dummy password check for prototyping.
