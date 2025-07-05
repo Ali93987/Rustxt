@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { categories, getLessonAndCategory } from '@/lib/data';
+import { getCategories, getLessonAndCategory } from '@/lib/data';
 import { LessonView } from '@/components/lesson-view';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -12,16 +12,22 @@ interface LessonPageProps {
   };
 }
 
-export function generateStaticParams() {
-  return categories.flatMap((category) =>
-    category.lessons.map((lesson) => ({
-      slug: lesson.slug,
-    }))
-  );
+export async function generateStaticParams() {
+  const categories = await getCategories();
+  
+  const allLessons = [];
+  for (const category of categories) {
+    if (category.lessons) {
+      for (const lesson of category.lessons) {
+        allLessons.push({ slug: lesson.slug });
+      }
+    }
+  }
+  return allLessons;
 }
 
-export default function LessonPage({ params }: LessonPageProps) {
-  const data = getLessonAndCategory(params.slug);
+export default async function LessonPage({ params }: LessonPageProps) {
+  const data = await getLessonAndCategory(params.slug);
 
   if (!data) {
     notFound();
@@ -30,7 +36,7 @@ export default function LessonPage({ params }: LessonPageProps) {
   const { lesson, category } = data;
 
   // We can't pass the icon component to a client component.
-  // Let's create a serializable category object without the icon.
+  // Let's create a serializable category object without the icon component.
   const { icon, ...serializableCategory } = category;
 
   return (

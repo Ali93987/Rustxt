@@ -1,8 +1,14 @@
-import type { LucideIcon } from 'lucide-react';
-import { BookHeart, BookCheck, Feather, LibraryBig } from 'lucide-react';
+import 'server-only';
 
+import type { LucideIcon } from 'lucide-react';
+import { collection, getDocs, getDoc, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { BookHeart, BookCheck, Feather, LibraryBig, Milestone, Drama } from 'lucide-react';
+
+// --- Interfaces ---
+// These now reflect what's stored in Firestore.
 export interface Lesson {
-  id: number;
+  id: string; // Firestore document ID
   slug: string;
   title: string;
   subtitle: string;
@@ -13,115 +19,114 @@ export interface Lesson {
 }
 
 export interface Category {
-  id: number;
-  slug:string;
+  id: string; // Firestore document ID
+  slug: string;
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: string; // Note: We store the icon's name as a string
   lessons: Lesson[];
+  createdAt?: Timestamp;
 }
 
-export const categories: Category[] = [
-  {
-    id: 1,
-    slug: 'children-stories',
-    title: 'قصه‌های کودکانه',
-    description: 'داستان‌های ساده و جذاب برای شروع یادگیری.',
-    icon: BookHeart,
-    lessons: [
-      {
-        id: 101,
-        slug: 'the-turnip',
-        title: 'شلغم',
-        subtitle: 'یک داستان کلاسیک درباره همکاری.',
-        text: 'یک داستان کلاسیک روسی درباره خانواده‌ای که سعی در بیرون کشیدن یک شلغم غول‌پیکر دارند.',
-        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        logoSrc: 'https://placehold.co/100x100.png',
-        logoAiHint: 'turnip story',
-      },
-      {
-        id: 102,
-        slug: 'kolobok',
-        title: 'کُلوبوک',
-        subtitle: 'ماجرای یک نان شیرین و بازیگوش.',
-        text: 'داستان یک نان زنجبیلی که از دست همه فرار می‌کند.',
-        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-        logoSrc: 'https://placehold.co/100x100.png',
-        logoAiHint: 'gingerbread man',
-      },
-    ],
-  },
-  {
-    id: 2,
-    slug: 'true-stories',
-    title: 'داستان‌های واقعی',
-    description: 'روایت‌های واقعی برای آشنایی با فرهنگ و تاریخ روسیه.',
-    icon: BookCheck,
-    lessons: [
-      {
-        id: 201,
-        slug: 'yuri-gagarin',
-        title: 'یوری گاگارین، اولین انسان در فضا',
-        subtitle: 'سفری به تاریخ فضانوردی.',
-        text: 'داستان پرواز تاریخی یوری گاگارین و تبدیل شدن او به اولین انسانی که به فضا سفر کرد.',
-        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-        logoSrc: 'https://placehold.co/100x100.png',
-        logoAiHint: 'astronaut space',
-      },
-    ],
-  },
-  {
-    id: 3,
-    slug: 'poems',
-    title: 'شعرها',
-    description: 'آثار شاعران بزرگ روس.',
-    icon: Feather,
-    lessons: [
-      {
-        id: 301,
-        slug: 'pushkin-i-loved-you',
-        title: 'الکساندر پوشکین - من شما را دوست داشتم',
-        subtitle: 'شعری عمیق و احساسی.',
-        text: 'یکی از معروف‌ترین اشعار عاشقانه پوشکین.',
-        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-        logoSrc: 'https://placehold.co/100x100.png',
-        logoAiHint: 'poem book',
-      },
-    ],
-  },
-    {
-    id: 4,
-    slug: 'novels',
-    title: 'رمان‌ها',
-    description: 'گزیده‌ای از رمان‌های کلاسیک روسی.',
-    icon: LibraryBig,
-    lessons: [
-      {
-        id: 401,
-        slug: 'crime-and-punishment-excerpt',
-        title: 'گزیده‌ای از جنایت و مکافات',
-        subtitle: 'کاوشی در روان انسان.',
-        text: 'بخشی از رمان مشهور فئودور داستایفسکی.',
-        audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-        logoSrc: 'https://placehold.co/100x100.png',
-        logoAiHint: 'classic novel',
-      },
-    ],
-  },
-];
+// --- Icon Mapping ---
+// This map helps us convert the icon name string from Firestore into a renderable component.
+export const iconMap: { [key: string]: LucideIcon } = {
+  BookHeart,
+  BookCheck,
+  Feather,
+  LibraryBig,
+  Milestone,
+  Drama,
+};
 
-export function getCategory(slug: string): Category | undefined {
-  return categories.find((category) => category.slug === slug);
+export function getIcon(name: string): LucideIcon {
+  return iconMap[name] || BookHeart; // Fallback to a default icon
 }
 
-export function getLessonAndCategory(
+export const availableIcons = Object.keys(iconMap);
+
+// --- Data Fetching Functions ---
+
+export async function getCategories(): Promise<Category[]> {
+  try {
+    const categoriesCollection = collection(db, 'categories');
+    // Order by creation time to keep a consistent order
+    const q = query(categoriesCollection, orderBy('createdAt', 'asc'));
+    const categorySnapshot = await getDocs(q);
+
+    // Using Promise.all to fetch all lessons for all categories in parallel
+    const categoriesList = await Promise.all(categorySnapshot.docs.map(async (categoryDoc) => {
+      const categoryData = {
+        id: categoryDoc.id,
+        ...categoryDoc.data(),
+      } as Category;
+
+      // In this version, we assume lessons might be a subcollection
+      // For now, we'll return an empty array for simplicity.
+      // This can be expanded later.
+      categoryData.lessons = [];
+
+      return categoryData;
+    }));
+
+    return categoriesList;
+  } catch (error) {
+    console.error("Error fetching categories: ", error);
+    // In a real app, you might want to show an error page
+    return [];
+  }
+}
+
+export async function getCategory(slug: string): Promise<Category | undefined> {
+  try {
+    const q = query(collection(db, 'categories'), where('slug', '==', slug));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return undefined;
+    }
+
+    const categoryDoc = querySnapshot.docs[0];
+    const categoryData = {
+      id: categoryDoc.id,
+      ...categoryDoc.data(),
+    } as Category;
+    
+    // Fetch lessons for this category from the subcollection
+    const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
+    const lessonsSnapshot = await getDocs(lessonsCollection);
+    categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => ({
+        id: lessonDoc.id,
+        ...lessonDoc.data(),
+    } as Lesson));
+    
+    return categoryData;
+
+  } catch (error) {
+    console.error(`Error fetching category with slug ${slug}:`, error);
+    return undefined;
+  }
+}
+
+export async function getLessonAndCategory(
   lessonSlug: string
-): { lesson: Lesson; category: Category } | undefined {
-  for (const category of categories) {
-    const lesson = category.lessons.find((l) => l.slug === lessonSlug);
-    if (lesson) {
+): Promise<{ lesson: Lesson; category: Category } | undefined> {
+  // This is not the most efficient way for large datasets, but works for this app.
+  // A better schema might be a root-level `lessons` collection.
+  const allCategories = await getCategories();
+  for (const category of allCategories) {
+    // We must fetch lessons for each category to find the lesson
+    const lessonsCollection = collection(db, `categories/${category.id}/lessons`);
+    const q = query(lessonsCollection, where('slug', '==', lessonSlug));
+    const lessonSnapshot = await getDocs(q);
+
+    if (!lessonSnapshot.empty) {
+      const lessonDoc = lessonSnapshot.docs[0];
+      const lesson = { id: lessonDoc.id, ...lessonDoc.data() } as Lesson;
+      // We found the lesson, return it with its parent category
       return { lesson, category };
     }
   }
+
   return undefined;
 }

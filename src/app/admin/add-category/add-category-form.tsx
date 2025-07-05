@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
+import { useEffect } from 'react';
+
+import { addCategoryAction } from '@/lib/actions';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -10,28 +12,33 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+const initialState = {
+  message: '',
+  success: false,
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? 'در حال افزودن...' : 'افزودن دسته‌بندی'}
+    </Button>
+  );
+}
+
 export function AddCategoryForm() {
-  const router = useRouter();
   const { toast } = useToast();
-  
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, formAction] = useFormState(addCategoryAction, initialState);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // In a real app, you would save this data to your database.
-    // For now, we'll just simulate a successful save.
-    setTimeout(() => {
+  useEffect(() => {
+    if (state?.message && !state.success) {
       toast({
-        title: 'دسته‌بندی با موفقیت افزوده شد',
-        description: `دسته‌بندی «${title}» (به صورت نمایشی) ایجاد شد.`,
+        variant: 'destructive',
+        title: 'خطا',
+        description: state.message,
       });
-      router.push('/admin/dashboard');
-    }, 1000);
-  };
+    }
+  }, [state, toast]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -39,18 +46,17 @@ export function AddCategoryForm() {
         <CardHeader>
           <CardTitle className="text-2xl font-headline">افزودن دسته‌بندی جدید</CardTitle>
           <CardDescription>
-            اطلاعات دسته‌بندی جدید را وارد کنید. توجه: چون هنوز پایگاه داده نداریم، این تغییرات ذخیره نخواهند شد.
+            اطلاعات دسته‌بندی جدید را وارد کنید. این اطلاعات در پایگاه داده ذخیره خواهد شد.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form action={formAction}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">عنوان</Label>
               <Input
                 id="title"
+                name="title"
                 placeholder="مثلا: مکالمات روزمره"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
                 required
               />
             </div>
@@ -58,9 +64,8 @@ export function AddCategoryForm() {
               <Label htmlFor="description">توضیحات</Label>
               <Textarea
                 id="description"
+                name="description"
                 placeholder="توضیح کوتاهی درباره این دسته‌بندی بنویسید."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
                 required
                 rows={4}
                 className="resize-none"
@@ -71,9 +76,7 @@ export function AddCategoryForm() {
              <Button variant="link" asChild>
                 <Link href="/admin/dashboard">انصراف و بازگشت</Link>
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'در حال افزودن...' : 'افزودن دسته‌بندی'}
-            </Button>
+            <SubmitButton />
           </CardFooter>
         </form>
       </Card>

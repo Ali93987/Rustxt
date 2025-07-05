@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { categories, getCategory } from '@/lib/data';
+import { getCategories, getCategory } from '@/lib/data';
 import { LessonList } from '@/components/lesson-list';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -11,14 +11,15 @@ interface CategoryPageProps {
   };
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const categories = await getCategories();
   return categories.map((category) => ({
     slug: category.slug,
   }));
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const category = getCategory(params.slug);
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const category = await getCategory(params.slug);
 
   if (!category) {
     notFound();

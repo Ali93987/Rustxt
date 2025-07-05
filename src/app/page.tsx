@@ -1,9 +1,11 @@
 import { CategoryList } from '@/components/category-list';
-import { categories } from '@/lib/data';
+import { getCategories } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function Home() {
+export default async function Home() {
+  const categories = await getCategories();
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto p-4 md:p-8 flex justify-between items-center">
