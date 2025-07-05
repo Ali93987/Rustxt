@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { loginUserAction } from '@/lib/actions';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 const initialState = {
   message: '',
   success: false,
+  user: null,
 };
 
 function SubmitButton() {
@@ -27,17 +29,28 @@ function SubmitButton() {
 
 export function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [state, formAction] = useFormState(loginUserAction, initialState);
 
   useEffect(() => {
-    if (state?.message && !state.success) {
+    if (state.success && state.user) {
+      // Login successful: store user in localStorage and redirect
+      localStorage.setItem('currentUser', JSON.stringify(state.user));
+      window.dispatchEvent(new Event('storage')); // Notify other tabs/components
+      router.push('/');
+      toast({
+          title: 'ورود موفقیت آمیز',
+          description: `خوش آمدید، ${state.user.username}!`,
+      });
+    } else if (state.message && !state.success) {
+      // Login failed: show error toast
       toast({
         variant: 'destructive',
         title: 'خطا در ورود',
         description: state.message,
       });
     }
-  }, [state, toast]);
+  }, [state, router, toast]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">

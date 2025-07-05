@@ -466,14 +466,17 @@ export async function loginUserAction(prevState: any, formData: FormData) {
       return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
     }
 
-    // In a real app, you would set a session cookie here.
-    // For now, we just redirect.
+    // On successful login, return user data
+    return {
+      success: true,
+      user: {
+        id: userDoc.id,
+        username: userData.username,
+      },
+    };
 
   } catch (error) {
     console.error("Error during login:", error);
     return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
   }
-
-  revalidatePath('/'); // To update any UI that might depend on login state
-  redirect('/'); // Redirect to home page on successful login
 }

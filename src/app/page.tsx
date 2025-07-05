@@ -2,6 +2,7 @@ import { CategoryList } from '@/components/category-list';
 import { getCategories } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { UserStatus } from '@/components/user-status';
 
 export default async function Home() {
   const categories = await getCategories();
@@ -9,15 +10,13 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto p-4 md:p-8 flex justify-between items-center">
-        <div className="w-24 text-left">
-          <Button asChild variant="outline">
-            <Link href="/login">ورود کاربر</Link>
-          </Button>
+        <div className="w-32 text-left">
+          <UserStatus />
         </div>
         <h1 className="font-headline text-5xl md:text-7xl font-bold text-primary text-center">
           !говорю
         </h1>
-        <div className="w-24 text-right">
+        <div className="w-32 text-right">
           <Button asChild variant="outline">
             <Link href="/admin">ورود مدیر</Link>
           </Button>
