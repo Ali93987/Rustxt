@@ -3,6 +3,7 @@ import { categories } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PlusCircle, Edit, Trash2, LogOut } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -23,42 +24,64 @@ export default function AdminDashboardPage() {
       <main>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
+            <CardTitle>مدیریت محتوا</CardTitle>
             <Button>
               <PlusCircle className="ml-2 h-4 w-4" />
               افزودن دسته‌بندی
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>عنوان</TableHead>
-                    <TableHead>تعداد درس‌ها</TableHead>
-                    <TableHead className="text-left">عملیات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.title}</TableCell>
-                      <TableCell>{category.lessons.length}</TableCell>
-                      <TableCell className="text-left space-x-2 space-x-reverse">
-                        <Button asChild variant="ghost" size="icon" aria-label="ویرایش">
-                          <Link href={`/admin/edit-category/${category.slug}`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
+            <Accordion type="single" collapsible className="w-full">
+              {categories.map((category) => (
+                <AccordionItem value={`category-${category.id}`} key={category.id}>
+                  <AccordionTrigger className="text-xl hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <span>{category.title}</span>
+                      <Button asChild variant="ghost" size="icon" aria-label="ویرایش دسته بندی" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/admin/edit-category/${category.slug}`}>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-2">
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>عنوان درس</TableHead>
+                            <TableHead className="text-left">عملیات</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {category.lessons.map((lesson) => (
+                            <TableRow key={lesson.id}>
+                              <TableCell className="font-medium">{lesson.title}</TableCell>
+                              <TableCell className="text-left space-x-2 space-x-reverse">
+                                <Button asChild variant="ghost" size="icon" aria-label="ویرایش درس">
+                                  <Link href={`/admin/edit-lesson/${lesson.slug}`}>
+                                    <Edit className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                                <Button variant="ghost" size="icon" aria-label="حذف درس" className="text-destructive hover:text-destructive/90">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                     <div className="text-right mt-4">
+                        <Button variant="outline">
+                          <PlusCircle className="ml-2 h-4 w-4" />
+                          افزودن درس جدید
                         </Button>
-                        <Button variant="ghost" size="icon" aria-label="حذف" className="text-destructive hover:text-destructive/90">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </CardContent>
           <CardFooter>
             <p className="text-xs text-muted-foreground">

@@ -47,7 +47,7 @@ export default function LessonPage({ params }: LessonPageProps) {
           <p className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90">
             {lesson.text}
           </p>
-          <LessonView lesson={lesson} />
+          <LessonView lesson={lesson} category={category} />
         </main>
       </div>
     </div>
