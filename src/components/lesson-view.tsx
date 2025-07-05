@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Check, CirclePlay, RotateCcw } from 'lucide-react';
 
+type SerializableCategory = Omit<Category, 'icon'>;
+
 interface LessonViewProps {
   lesson: Lesson;
-  category: Category;
+  category: SerializableCategory;
 }
 
 export function LessonView({ lesson, category }: LessonViewProps) {

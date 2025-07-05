@@ -28,6 +28,10 @@ export default function LessonPage({ params }: LessonPageProps) {
 
   const { lesson, category } = data;
 
+  // We can't pass the icon component to a client component.
+  // Let's create a serializable category object without the icon.
+  const { icon, ...serializableCategory } = category;
+
   return (
     <div className="min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
@@ -47,7 +51,7 @@ export default function LessonPage({ params }: LessonPageProps) {
           <p className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90">
             {lesson.text}
           </p>
-          <LessonView lesson={lesson} category={category} />
+          <LessonView lesson={lesson} category={serializableCategory} />
         </main>
       </div>
     </div>
