@@ -12,14 +12,14 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import wav from 'wav';
 
-// The input schema for our flow
-export const TranslateWordInputSchema = z.object({
+// The input schema for our flow (not exported)
+const TranslateWordInputSchema = z.object({
   word: z.string().describe('The Russian word to translate.'),
 });
 export type TranslateWordInput = z.infer<typeof TranslateWordInputSchema>;
 
-// The output schema for our flow
-export const TranslateWordOutputSchema = z.object({
+// The output schema for our flow (not exported)
+const TranslateWordOutputSchema = z.object({
   translation: z.string().describe('The Persian translation of the word.'),
   phonetic: z.string().describe('The phonetic transcription in simple Latin letters (e.g., privet).'),
   audioDataUri: z.string().describe("The audio pronunciation as a data URI in WAV format."),
