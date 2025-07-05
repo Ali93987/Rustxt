@@ -278,3 +278,56 @@ export async function editLessonAction(prevState: any, formData: FormData) {
 
   redirect('/admin/dashboard');
 }
+
+// --- Add User Action ---
+const UserSchema = z.object({
+  username: z.string().min(3, { message: 'نام کاربری باید حداقل ۳ حرف باشد.' }),
+  email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
+});
+
+export async function addUserAction(prevState: any, formData: FormData) {
+  const validatedFields = UserSchema.safeParse({
+    username: formData.get('username'),
+    email: formData.get('email'),
+  });
+
+  if (!validatedFields.success) {
+    const errorMessage = validatedFields.error.errors.map(e => e.message).join(', ');
+    return {
+      message: errorMessage,
+      success: false,
+    };
+  }
+
+  const { username, email } = validatedFields.data;
+
+  try {
+    // Check for existing user with same username or email
+    const usernameQuery = query(collection(db, 'users'), where('username', '==', username));
+    const emailQuery = query(collection(db, 'users'), where('email', '==', email));
+    
+    const usernameSnapshot = await getDocs(usernameQuery);
+    if (!usernameSnapshot.empty) {
+      return { message: 'این نام کاربری قبلا استفاده شده است.', success: false };
+    }
+
+    const emailSnapshot = await getDocs(emailQuery);
+    if (!emailSnapshot.empty) {
+      return { message: 'این ایمیل قبلا استفاده شده است.', success: false };
+    }
+
+    await addDoc(collection(db, 'users'), {
+      username,
+      email,
+      createdAt: Timestamp.now(),
+    });
+
+    revalidatePath('/admin/dashboard');
+
+  } catch (error) {
+    console.error("Error adding user:", error);
+    return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
+  }
+
+  redirect('/admin/dashboard');
+}

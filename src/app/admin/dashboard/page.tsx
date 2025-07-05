@@ -1,13 +1,14 @@
 import Link from 'next/link';
-import { getCategories } from '@/lib/data';
+import { getCategories, getUsers } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PlusCircle, Edit, Trash2, LogOut } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, LogOut, User, BookOpen } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const categories = await getCategories();
+  const users = await getUsers();
 
   return (
     <div className="container mx-auto p-4 md:p-8 min-h-screen">
@@ -23,10 +24,14 @@ export default async function AdminDashboardPage() {
         </Button>
       </header>
 
-      <main>
-        <Card>
+      <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Content Management Card */}
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>مدیریت محتوا</CardTitle>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-primary" />
+              <CardTitle>مدیریت محتوا</CardTitle>
+            </div>
             <Button asChild>
               <Link href="/admin/add-category">
                 <PlusCircle className="ml-2 h-4 w-4" />
@@ -101,9 +106,60 @@ export default async function AdminDashboardPage() {
               </Accordion>
             )}
           </CardContent>
-          <CardFooter>
+        </Card>
+
+        {/* User Management Card */}
+        <Card className="lg:col-span-1">
+           <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-6 w-6 text-primary" />
+              <CardTitle>مدیریت کاربران</CardTitle>
+            </div>
+            <Button asChild>
+              <Link href="/admin/add-user">
+                <PlusCircle className="ml-2 h-4 w-4" />
+                افزودن کاربر
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+             {users.length === 0 ? (
+              <p className="text-muted-foreground text-center p-8">
+                هنوز هیچ کاربری اضافه نشده است.
+              </p>
+            ) : (
+               <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>نام کاربری</TableHead>
+                      <TableHead>ایمیل</TableHead>
+                      <TableHead className="text-left">عملیات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.username}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell className="text-left space-x-2 space-x-reverse">
+                           <Button variant="ghost" size="icon" aria-label="ویرایش کاربر" disabled>
+                              <Edit className="h-4 w-4" />
+                           </Button>
+                           <Button variant="ghost" size="icon" aria-label="حذف کاربر" className="text-destructive hover:text-destructive/90" disabled>
+                              <Trash2 className="h-4 w-4" />
+                           </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+               </div>
+            )}
+          </CardContent>
+           <CardFooter>
             <p className="text-xs text-muted-foreground">
-              برای افزودن درس و فعال‌سازی دکمه‌های حذف و ویرایش، در مراحل بعدی اقدام خواهیم کرد.
+              قابلیت ویرایش و حذف کاربران در آینده اضافه خواهد شد.
             </p>
           </CardFooter>
         </Card>

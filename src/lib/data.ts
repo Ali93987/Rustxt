@@ -31,6 +31,14 @@ export interface Category {
   createdAt?: Timestamp;
 }
 
+export interface User {
+  id: string; // Firestore document ID
+  username: string;
+  email: string;
+  createdAt?: Timestamp;
+}
+
+
 // --- Icon Mapping ---
 // This map helps us convert the icon name string from Firestore into a renderable component.
 export const iconMap: { [key: string]: LucideIcon } = {
@@ -185,4 +193,24 @@ export async function getLessonAndCategory(
      console.error(`Error fetching lesson with slug ${lessonSlug}:`, error);
   }
   return undefined;
+}
+
+export async function getUsers(): Promise<User[]> {
+  try {
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, orderBy('createdAt', 'desc'));
+    const usersSnapshot = await getDocs(q);
+
+    const usersList = usersSnapshot.docs.map(userDoc => {
+      return {
+        id: userDoc.id,
+        ...userDoc.data(),
+      } as User;
+    });
+
+    return usersList;
+  } catch (error) {
+    console.error("Error fetching users: ", error);
+    return [];
+  }
 }
