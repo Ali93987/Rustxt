@@ -38,7 +38,6 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // State for the full-text translation tab
-  const [viewMode, setViewMode] = useState<'ru' | 'fa'>('ru');
   const [fullTextTranslation] = useState<string>(lesson.translationFa || '');
 
 
@@ -48,49 +47,30 @@ export function LessonView({ lesson, category }: LessonViewProps) {
   const knownWordsCount = knownWords.size;
   const learningProgress = totalWordsWithTranslation > 0 ? (knownWordsCount / totalWordsWithTranslation) * 100 : 0;
 
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const { audioStartTime, audioEndTime } = lesson;
-
-    const handlePlay = () => {
-        if (audioStartTime != null) {
-            // If the current time is outside the allowed segment, reset it to the start.
-            if (audio.currentTime < audioStartTime || (audioEndTime != null && audio.currentTime >= audioEndTime)) {
-                audio.currentTime = audioStartTime;
-            }
-        }
-    };
-
-    const handleTimeUpdate = () => {
-        // If an end time is set and playback goes beyond it, loop back to the start time.
-        // This creates a loop within the specified range.
-        if (audioEndTime != null && audioEndTime > 0 && audioStartTime != null && audio.currentTime >= audioEndTime) {
-            audio.currentTime = audioStartTime;
-            audio.play();
-        }
-    };
+  const audioUrlWithFragment = useMemo(() => {
+    if (!lesson.audioSrc) {
+      return '';
+    }
     
-    // Set initial time when the file is ready to be played.
-    const handleLoadedMetadata = () => {
-        if (audioStartTime != null) {
-            audio.currentTime = audioStartTime;
-        }
-    };
+    const { audioStartTime, audioEndTime } = lesson;
+    
+    // Only apply fragment if start and end times are valid
+    if (audioStartTime != null && audioEndTime != null && audioEndTime > audioStartTime) {
+      return `${lesson.audioSrc}#t=${audioStartTime},${audioEndTime}`;
+    }
+    
+    // Fallback for only start time (play to end)
+    if (audioStartTime != null) {
+      return `${lesson.audioSrc}#t=${audioStartTime}`;
+    }
 
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return lesson.audioSrc;
+  }, [lesson.audioSrc, lesson.audioStartTime, lesson.audioEndTime]);
 
-    // Cleanup
-    return () => {
-        audio.removeEventListener('play', handlePlay);
-        audio.removeEventListener('timeupdate', handleTimeUpdate);
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-    };
-}, [lesson.audioStartTime, lesson.audioEndTime]);
+  // Determine if the audio should loop based on a complete range being provided.
+  const shouldLoop = useMemo(() => 
+    lesson.audioStartTime != null && lesson.audioEndTime != null && lesson.audioEndTime > lesson.audioStartTime,
+  [lesson.audioStartTime, lesson.audioEndTime]);
 
 
   useEffect(() => {
@@ -105,14 +85,24 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           { src: lesson.logoSrc, sizes: '512x512', type: 'image/png' },
         ]
       });
-      navigator.mediaSession.setActionHandler('play', () => audio.play());
+      
+      const playAction = () => {
+        // We must call the play method on the audio element, and it returns a promise.
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => console.error("Audio playback failed", error));
+        }
+      };
+
+      navigator.mediaSession.setActionHandler('play', playAction);
       navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+
       return () => {
         navigator.mediaSession.setActionHandler('play', null);
         navigator.mediaSession.setActionHandler('pause', null);
       };
     }
-  }, [lesson, category]);
+  }, [lesson, category, audioUrlWithFragment]); // Re-run when src changes
 
   const wordsAndSeparators = lesson.text ? lesson.text.split(/([ \n\t]+)/) : [];
 
@@ -130,108 +120,106 @@ export function LessonView({ lesson, category }: LessonViewProps) {
 
       {/* Lesson Text with Translation Toggle */}
       {lesson.text && (
-         <div className="space-y-4 mb-8">
-            <Tabs defaultValue="ru" className="w-full" onValueChange={(value) => setViewMode(value as 'ru' | 'fa')}>
-                <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="ru">متن اصلی (Ru)</TabsTrigger>
-                <TabsTrigger value="fa">ترجمه (Fa)</TabsTrigger>
-                </TabsList>
-                <TabsContent value="ru" className="mt-0">
-                    <div
-                        className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-left"
-                        dir="ltr"
-                    >
-                        {wordsAndSeparators.map((segment, index) => {
-                          const normalized = normalizeWord(segment);
-                          if (!normalized) {
-                            return <span key={index}>{segment}</span>;
-                          }
-                          
-                          const preDefinedTranslation = lesson.vocabulary?.[normalized];
-                          
-                          return (
-                            <Popover key={index}>
-                              <PopoverTrigger asChild>
-                                <span
-                                  className={cn(
-                                    'cursor-pointer rounded-sm p-0.5 transition-colors duration-200',
-                                    isWordKnown(normalized) ? 'bg-primary/20 text-primary-foreground font-semibold' : 'hover:bg-accent/50',
-                                  )}
-                                >
-                                  {segment}
-                                </span>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-3" align="center" dir="rtl">
-                                {preDefinedTranslation ? (
-                                  <div className="space-y-3">
-                                    <p className="font-body text-base text-center">{preDefinedTranslation}</p>
-                                    
-                                    {progressEnabled && (
-                                      <>
-                                        <Separator />
-                                        <div className="flex justify-around pt-2 gap-2">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setWordKnownState(normalized, false)}
-                                          >
-                                            نمیدانم
-                                            <ThumbsDown className="mr-2 h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            onClick={() => setWordKnownState(normalized, true)}
-                                          >
-                                            میدانم
-                                            <ThumbsUp className="mr-2 h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </>
-                                    )}
-
+         <Tabs defaultValue="ru" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ru">متن اصلی (Ru)</TabsTrigger>
+            <TabsTrigger value="fa">ترجمه (Fa)</TabsTrigger>
+            </TabsList>
+            <TabsContent value="ru" className="mt-0">
+                <div
+                    className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-left mt-4"
+                    dir="ltr"
+                >
+                    {wordsAndSeparators.map((segment, index) => {
+                      const normalized = normalizeWord(segment);
+                      if (!normalized) {
+                        return <span key={index}>{segment}</span>;
+                      }
+                      
+                      const preDefinedTranslation = lesson.vocabulary?.[normalized];
+                      
+                      return (
+                        <Popover key={index}>
+                          <PopoverTrigger asChild>
+                            <span
+                              className={cn(
+                                'cursor-pointer rounded-sm p-0.5 transition-colors duration-200',
+                                isWordKnown(normalized) ? 'bg-primary/20 text-primary-foreground font-semibold' : 'hover:bg-accent/50',
+                              )}
+                            >
+                              {segment}
+                            </span>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-3" align="center" dir="rtl">
+                            {preDefinedTranslation ? (
+                              <div className="space-y-3">
+                                <p className="font-body text-base text-center">{preDefinedTranslation}</p>
+                                
+                                {progressEnabled && (
+                                  <>
                                     <Separator />
-                                    <Button asChild size="sm" variant="link" className="w-full text-muted-foreground">
-                                      <a
-                                        href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 justify-center"
+                                    <div className="flex justify-around pt-2 gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setWordKnownState(normalized, false)}
                                       >
-                                        مشاهده در یاندکس
-                                        <ExternalLink className="h-4 w-4" />
-                                      </a>
-                                    </Button>
-
-                                  </div>
-                                ) : (
-                                  <Button asChild size="sm">
-                                    <a
-                                      href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2"
-                                    >
-                                      ترجمه با یاندکس
-                                      <ExternalLink className="h-4 w-4" />
-                                    </a>
-                                  </Button>
+                                        نمیدانم
+                                        <ThumbsDown className="mr-2 h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => setWordKnownState(normalized, true)}
+                                      >
+                                        میدانم
+                                        <ThumbsUp className="mr-2 h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </>
                                 )}
-                              </PopoverContent>
-                            </Popover>
-                          );
-                        })}
-                    </div>
-                </TabsContent>
-                <TabsContent value="fa" className="mt-0">
-                    <div
-                        className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-right"
-                        dir="rtl"
-                    >
-                      <p>{fullTextTranslation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
-                    </div>
-                </TabsContent>
-            </Tabs>
-         </div>
+
+                                <Separator />
+                                <Button asChild size="sm" variant="link" className="w-full text-muted-foreground">
+                                  <a
+                                    href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 justify-center"
+                                  >
+                                    مشاهده در یاندکس
+                                    <ExternalLink className="h-4 w-4" />
+                                  </a>
+                                </Button>
+
+                              </div>
+                            ) : (
+                              <Button asChild size="sm">
+                                <a
+                                  href={`https://translate.yandex.com/?source_lang=ru&target_lang=fa&text=${encodeURIComponent(normalized)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2"
+                                >
+                                  ترجمه با یاندکس
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
+                </div>
+            </TabsContent>
+            <TabsContent value="fa" className="mt-0">
+                <div
+                    className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 border p-4 rounded-md bg-muted/30 min-h-[200px] text-right mt-4"
+                    dir="rtl"
+                >
+                  <p>{fullTextTranslation || "ترجمه‌ای برای این درس ارائه نشده است."}</p>
+                </div>
+            </TabsContent>
+        </Tabs>
       )}
 
       {/* If there's no text, we shouldn't show the separator for it. */}
@@ -245,8 +233,14 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           </h2>
           {lesson.audioSrc ? (
             <div className="bg-muted p-4 rounded-lg">
-              <audio ref={audioRef} controls className="w-full">
-                <source src={lesson.audioSrc} type="audio/mpeg" />
+              <audio 
+                ref={audioRef}
+                key={audioUrlWithFragment}
+                controls 
+                loop={shouldLoop}
+                className="w-full"
+              >
+                <source src={audioUrlWithFragment} type="audio/mpeg" />
                 مرورگر شما از این فایل صوتی پشتیبانی نمی‌کند.
               </audio>
               <p className="text-xs text-muted-foreground mt-2">
