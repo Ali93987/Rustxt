@@ -9,15 +9,21 @@ import { redirect } from 'next/navigation';
 import { availableIcons, getCategoryById } from './data';
 import { randomUUID } from 'crypto';
 
-// Basic slugify function
+// A more robust slugify function that correctly handles Unicode characters.
 function slugify(text: string): string {
   return text
     .toString()
-    .toLowerCase()
     .trim()
-    .replace(/[.,!?;:"()']/g, '') // remove common punctuation
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/--+/g, '-'); // Replace multiple - with single -
+    .toLowerCase()
+    // 1. Replace spaces and common punctuation with a hyphen.
+    .replace(/[\s_.,!?;:"()']+/g, '-')
+    // 2. Remove any character that is not a letter from any language, a number, or a hyphen.
+    //    The 'u' flag enables Unicode mode for the regex.
+    .replace(/[^\p{L}\p{N}-]/gu, '')
+    // 3. Replace multiple hyphens with a single hyphen.
+    .replace(/--+/g, '-')
+    // 4. Trim leading/trailing hyphens.
+    .replace(/^-+|-+$/g, '');
 }
 
 const CategorySchema = z.object({
