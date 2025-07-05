@@ -147,7 +147,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                                 ) : (
                                   <Button asChild size="sm">
                                     <a
-                                      href={`https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(normalized)}`}
+                                      href={`https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(normalized)}&op=translate`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-2"
