@@ -50,6 +50,7 @@ export const availableIcons = Object.keys(iconMap);
 
 /**
  * Corrects common typos in image placeholder URLs and provides a fallback.
+ * This version uses a more robust regex to avoid future issues.
  * @param url The original image URL from the database.
  * @returns A corrected, valid URL string.
  */
@@ -57,8 +58,9 @@ function correctImageUrl(url: string | undefined | null): string {
   if (!url || url.trim() === '') {
     return 'https://placehold.co/100x100.png';
   }
-  // This regex fixes common typos like "placehold.c" or "placehold.coo"
-  return url.replace(/placehold\.c(oo)?\b/g, 'placehold.co');
+  // This regex specifically finds placehold.c or placehold.coo and replaces it with placehold.co
+  // It ensures it's part of the domain by looking for what comes before and after.
+  return url.replace(/(\/\/placehold\.)(c|coo)(\/|$)/, '$1co$3');
 }
 
 export async function getCategories(): Promise<Category[]> {
