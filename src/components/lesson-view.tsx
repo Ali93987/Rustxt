@@ -41,40 +41,12 @@ export function LessonView({ lesson, category }: LessonViewProps) {
     }
   }, [lesson, category]);
 
-  const handleWordClick = (word: string) => {
-    // Clean the word from punctuation and check if it's a valid Russian word to translate
-    const cleanedWord = word.trim().replace(/[.,!?;:"]+$/, '');
-    if (!cleanedWord || !/^[а-яА-ЯёЁ]+$/.test(cleanedWord)) {
-      return;
-    }
-    
-    // Open Google Translate in a new tab
-    const googleTranslateUrl = `https://translate.google.com/?sl=ru&tl=fa&text=${encodeURIComponent(cleanedWord)}&op=translate`;
-    window.open(googleTranslateUrl, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <>
-      {/* Interactive Lesson Text */}
+      {/* Lesson Text */}
       {lesson.text && (
         <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md">
-          {lesson.text.split(/(\s+)/).map((segment, index) => {
-            if (segment.trim().length > 0) {
-              return (
-                <span
-                  key={index}
-                  className="cursor-pointer hover:bg-primary/20 p-1 rounded-md transition-colors"
-                  onClick={() => handleWordClick(segment)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleWordClick(segment)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  {segment}
-                </span>
-              );
-            }
-            return segment;
-          })}
+          {lesson.text}
         </div>
       )}
       
