@@ -16,11 +16,11 @@ export function EditLessonForm({ lesson }: { lesson: Lesson }) {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [title, setTitle] = useState(lesson.title);
-  const [subtitle, setSubtitle] = useState(lesson.subtitle);
-  const [logoSrc, setLogoSrc] = useState(lesson.logoSrc);
-  const [text, setText] = useState(lesson.text);
-  const [audioSrc, setAudioSrc] = useState(lesson.audioSrc);
+  const [title, setTitle] = useState(lesson.title || '');
+  const [subtitle, setSubtitle] = useState(lesson.subtitle || '');
+  const [logoSrc, setLogoSrc] = useState(lesson.logoSrc || '');
+  const [text, setText] = useState(lesson.text || '');
+  const [audioSrc, setAudioSrc] = useState(lesson.audioSrc || '');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {

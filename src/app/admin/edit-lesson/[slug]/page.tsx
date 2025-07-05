@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
 import { getLessonAndCategory } from '@/lib/data';
 import { EditLessonForm } from './edit-lesson-form';
+import type { Lesson } from '@/lib/data';
 
-export default function EditLessonPage({ params }: { params: { slug: string } }) {
-  const data = getLessonAndCategory(params.slug);
+export default async function EditLessonPage({ params }: { params: { slug: string } }) {
+  const data = await getLessonAndCategory(params.slug);
 
   if (!data) {
     notFound();
@@ -11,6 +12,9 @@ export default function EditLessonPage({ params }: { params: { slug: string } })
   
   const { lesson } = data;
 
-  // Since EditLessonForm is a client component, we only pass the serializable lesson object.
-  return <EditLessonForm lesson={lesson} />;
+  // Since EditLessonForm is a client component, we only pass a serializable lesson object.
+  // We destructure `createdAt` out because it's not a plain object.
+  const { createdAt, ...serializableLesson } = lesson;
+
+  return <EditLessonForm lesson={serializableLesson as Lesson} />;
 }
