@@ -1,19 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from './use-auth';
 
-const WORD_PROGRESS_KEY = 'russian_word_progress';
+const WORD_PROGRESS_KEY_PREFIX = 'russian_word_progress_';
 
 // Data structure: { [lessonId: string]: string[] } -> maps lessonId to list of known words
 type WordProgressState = Record<string, string[]>;
 
-const loadProgress = (): WordProgressState => {
-    // localStorage is not available on the server, so we check for window
-    if (typeof window === 'undefined') {
+const loadProgress = (userId: string | null): WordProgressState => {
+    if (typeof window === 'undefined' || !userId) {
         return {};
     }
     try {
-        const saved = localStorage.getItem(WORD_PROGRESS_KEY);
+        const key = `${WORD_PROGRESS_KEY_PREFIX}${userId}`;
+        const saved = localStorage.getItem(key);
         return saved ? JSON.parse(saved) : {};
     } catch (e) {
         console.error("Failed to load word progress", e);
@@ -21,24 +22,38 @@ const loadProgress = (): WordProgressState => {
     }
 };
 
-const saveProgress = (progress: WordProgressState) => {
+const saveProgress = (userId: string | null, progress: WordProgressState) => {
+    if (typeof window === 'undefined' || !userId) {
+        return;
+    }
     try {
-        localStorage.setItem(WORD_PROGRESS_KEY, JSON.stringify(progress));
+        const key = `${WORD_PROGRESS_KEY_PREFIX}${userId}`;
+        localStorage.setItem(key, JSON.stringify(progress));
     } catch(e) {
         console.error("Failed to save word progress", e);
     }
 };
 
 export const useWordProgress = (lessonId: string) => {
+  const { user } = useAuth();
+  const userId = user?.id || null;
+
   const [allProgress, setAllProgress] = useState<WordProgressState>({});
 
   useEffect(() => {
-    setAllProgress(loadProgress());
-  }, []);
+    if (userId) {
+      setAllProgress(loadProgress(userId));
+    } else {
+      // If user logs out, clear the progress from state.
+      setAllProgress({});
+    }
+  }, [userId]);
 
   const knownWordsForLesson = useMemo(() => new Set(allProgress[lessonId] || []), [allProgress, lessonId]);
 
   const setWordKnownState = useCallback((word: string, isKnown: boolean) => {
+      if (!userId) return; // Do nothing if no user is logged in.
+
       setAllProgress(prev => {
           const currentKnown = new Set(prev[lessonId] || []);
           if (isKnown) {
@@ -50,14 +65,18 @@ export const useWordProgress = (lessonId: string) => {
               ...prev,
               [lessonId]: Array.from(currentKnown)
           };
-          saveProgress(newState);
+          saveProgress(userId, newState);
           return newState;
       });
-  }, [lessonId]);
+  }, [lessonId, userId]);
 
   const isWordKnown = useCallback((word: string) => {
+      // If no user, no words are "known".
+      if (!userId) return false;
       return knownWordsForLesson.has(word);
-  }, [knownWordsForLesson]);
+  }, [knownWordsForLesson, userId]);
 
-  return { knownWords: knownWordsForLesson, setWordKnownState, isWordKnown };
+  const progressEnabled = !!userId;
+
+  return { knownWords: knownWordsForLesson, setWordKnownState, isWordKnown, progressEnabled };
 };

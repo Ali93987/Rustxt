@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Lesson, Category } from '@/lib/data';
 import { useProgress } from '@/hooks/use-progress';
 import { useWordProgress } from '@/hooks/use-word-progress';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
@@ -32,8 +33,9 @@ const normalizeWord = (word: string) => {
 };
 
 export function LessonView({ lesson, category }: LessonViewProps) {
+  const { user } = useAuth();
   const { isCompleted, toggleComplete } = useProgress();
-  const { knownWords, setWordKnownState, isWordKnown } = useWordProgress(lesson.id);
+  const { knownWords, setWordKnownState, isWordKnown, progressEnabled } = useWordProgress(lesson.id);
   const completed = isCompleted(lesson.id);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -97,7 +99,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
 
   return (
     <>
-      {totalWordsWithTranslation > 0 && (
+      {progressEnabled && totalWordsWithTranslation > 0 && (
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2 font-body">
             <p className="text-sm text-muted-foreground">میزان یادگیری کلمات</p>
@@ -129,7 +131,7 @@ export function LessonView({ lesson, category }: LessonViewProps) {
                 const normalized = normalizeWord(segment);
                 const translation = normalized && lesson.vocabulary?.[normalized];
 
-                if (translation) {
+                if (translation && progressEnabled) {
                   return (
                     <Popover key={index}>
                       <PopoverTrigger asChild>
@@ -209,22 +211,24 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           )}
         </div>
         <div className="text-center pt-4">
-          <Button
-            size="lg"
-            onClick={() => toggleComplete(lesson.id)}
-            variant={completed ? "secondary" : "default"}
-            aria-label={completed ? 'علامت‌گذاری به عنوان ناقص' : 'علامت‌گذاری به عنوان تکمیل شده'}
-          >
-            {completed ? (
-              <>
-                <RotateCcw className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان ناقص
-              </>
-            ) : (
-              <>
-                <Check className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان تکمیل شده
-              </>
-            )}
-          </Button>
+          {user && (
+            <Button
+              size="lg"
+              onClick={() => toggleComplete(lesson.id)}
+              variant={completed ? "secondary" : "default"}
+              aria-label={completed ? 'علامت‌گذاری به عنوان ناقص' : 'علامت‌گذاری به عنوان تکمیل شده'}
+            >
+              {completed ? (
+                <>
+                  <RotateCcw className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان ناقص
+                </>
+              ) : (
+                <>
+                  <Check className="ml-2 h-4 w-4" /> علامت‌گذاری به عنوان تکمیل شده
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </>
