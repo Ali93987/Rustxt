@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Lesson, Category } from '@/lib/data';
 import { useProgress } from '@/hooks/use-progress';
+import { useWordProgress } from '@/hooks/use-word-progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Check, CirclePlay, RotateCcw } from 'lucide-react';
+import { Check, CirclePlay, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+
 
 type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
 type SerializableLesson = Omit<Lesson, 'createdAt'>;
@@ -26,8 +30,16 @@ const normalizeWord = (word: string) => {
 
 export function LessonView({ lesson, category }: LessonViewProps) {
   const { isCompleted, toggleComplete } = useProgress();
+  const { knownWords, setWordKnownState, isWordKnown } = useWordProgress(lesson.id);
   const completed = isCompleted(lesson.id);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const totalWordsWithTranslation = useMemo(() => {
+    return lesson.vocabulary ? Object.keys(lesson.vocabulary).length : 0;
+  }, [lesson.vocabulary]);
+  const knownWordsCount = knownWords.size;
+  const learningProgress = totalWordsWithTranslation > 0 ? (knownWordsCount / totalWordsWithTranslation) * 100 : 0;
+
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -54,6 +66,16 @@ export function LessonView({ lesson, category }: LessonViewProps) {
 
   return (
     <>
+      {totalWordsWithTranslation > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-2 font-body">
+            <p className="text-sm text-muted-foreground">میزان یادگیری کلمات</p>
+            <p className="text-sm font-semibold text-primary">{knownWordsCount} / {totalWordsWithTranslation}</p>
+          </div>
+          <Progress value={learningProgress} className="w-full h-2" />
+        </div>
+      )}
+
       {/* Lesson Text */}
       {lesson.text && (
         <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md bg-muted/30">
@@ -65,12 +87,35 @@ export function LessonView({ lesson, category }: LessonViewProps) {
               return (
                 <Popover key={index}>
                   <PopoverTrigger asChild>
-                    <span className="cursor-pointer">
+                    <span
+                      className={cn(
+                        "cursor-pointer rounded-sm p-0.5 transition-colors duration-200",
+                        isWordKnown(normalized) && "bg-primary/20 text-primary font-semibold"
+                      )}
+                    >
                       {segment}
                     </span>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2">
-                    <p className="font-body text-base">{translation}</p>
+                  <PopoverContent className="w-auto p-3" align="center">
+                    <p className="font-body text-base text-center pb-2">{translation}</p>
+                    <Separator />
+                    <div className="flex justify-around pt-2 gap-2">
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setWordKnownState(normalized, false)}
+                      >
+                          نمیدانم
+                          <ThumbsDown className="mr-2 h-4 w-4" />
+                      </Button>
+                      <Button
+                          size="sm"
+                          onClick={() => setWordKnownState(normalized, true)}
+                      >
+                          میدانم
+                          <ThumbsUp className="mr-2 h-4 w-4" />
+                      </Button>
+                    </div>
                   </PopoverContent>
                 </Popover>
               );
