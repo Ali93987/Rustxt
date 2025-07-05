@@ -9,7 +9,7 @@ export default async function EditCategoryPage({ params }: { params: { slug: str
     notFound();
   }
 
-  // Client components cannot receive non-serializable props like Timestamp objects.
+  // Client components cannot receive non-serializable props like complex objects.
   // We only pass the data that the form needs.
   const { icon, lessons, createdAt, ...serializableCategory } = category;
 

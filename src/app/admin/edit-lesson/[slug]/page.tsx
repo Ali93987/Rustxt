@@ -10,10 +10,10 @@ export default async function EditLessonPage({ params }: { params: { slug: strin
     notFound();
   }
   
-  const { lesson } = data;
+  const { lesson, category } = data;
 
-  // Since EditLessonForm is a client component, we only pass a serializable lesson object.
+  // Since EditLessonForm is a client component, we only pass serializable props.
   const { createdAt, ...serializableLesson } = lesson;
 
-  return <EditLessonForm lesson={serializableLesson as Lesson} />;
+  return <EditLessonForm lesson={serializableLesson as Lesson} categoryId={category.id} />;
 }

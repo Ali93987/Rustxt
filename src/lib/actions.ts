@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { addDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -31,7 +31,6 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
   });
 
   if (!validatedFields.success) {
-    // Join all error messages for a more comprehensive error
     const errorMessage = validatedFields.error.errors.map(e => e.message).join(', ');
     return {
       message: errorMessage,
@@ -43,14 +42,12 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
   const newSlug = slugify(title);
 
   try {
-    // Check if slug already exists to prevent duplicates
     const q = query(collection(db, 'categories'), where('slug', '==', newSlug));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       return { message: 'یک دسته‌بندی با این عنوان از قبل وجود دارد.', success: false };
     }
 
-    // Pick a random icon for the new category
     const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
 
     await addDoc(collection(db, 'categories'), {
@@ -61,7 +58,6 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
       createdAt: Timestamp.now(),
     });
 
-    // Invalidate caches for pages that show categories
     revalidatePath('/admin/dashboard');
     revalidatePath('/');
     
@@ -70,10 +66,66 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
     return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
   }
 
-  // Redirect to dashboard on successful creation
   redirect('/admin/dashboard');
 }
 
+// --- Edit Category Action ---
+const EditCategorySchema = CategorySchema.extend({
+    id: z.string().min(1, { message: 'شناسه دسته‌بندی الزامی است.' }),
+});
+
+export async function editCategoryAction(prevState: any, formData: FormData) {
+    const validatedFields = EditCategorySchema.safeParse({
+        id: formData.get('id'),
+        title: formData.get('title'),
+        description: formData.get('description'),
+    });
+
+    if (!validatedFields.success) {
+        const errorMessage = validatedFields.error.errors.map(e => e.message).join(' ');
+        return { message: errorMessage, success: false };
+    }
+
+    const { id, title, description } = validatedFields.data;
+    const newSlug = slugify(title);
+
+    try {
+        const categoryDocRef = doc(db, 'categories', id);
+        const categoryDoc = await getDoc(categoryDocRef);
+
+        if (!categoryDoc.exists()) {
+            return { message: 'دسته‌بندی مورد نظر یافت نشد.', success: false };
+        }
+
+        const currentSlug = categoryDoc.data().slug;
+        if (newSlug !== currentSlug) {
+            const q = query(collection(db, 'categories'), where('slug', '==', newSlug));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                return { message: 'دسته‌بندی دیگری با این عنوان وجود دارد.', success: false };
+            }
+        }
+        
+        await updateDoc(categoryDocRef, {
+            title,
+            description,
+            slug: newSlug,
+        });
+
+        revalidatePath('/admin/dashboard');
+        revalidatePath('/');
+        revalidatePath(`/category/${newSlug}`);
+        if (newSlug !== currentSlug) {
+            revalidatePath(`/category/${currentSlug}`);
+        }
+        
+    } catch (error) {
+        console.error("Error updating category:", error);
+        return { message: 'خطای سرور: امکان ویرایش دسته‌بندی وجود ندارد.', success: false };
+    }
+
+    redirect('/admin/dashboard');
+}
 
 // --- Add Lesson Action ---
 
@@ -146,5 +198,78 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: 'خطای سرور: امکان افزودن درس وجود ندارد.', success: false };
   }
   
+  redirect('/admin/dashboard');
+}
+
+// --- Edit Lesson Action ---
+
+const EditLessonSchema = LessonSchema.extend({
+  lessonId: z.string().min(1, 'شناسه درس الزامی است.'),
+});
+
+export async function editLessonAction(prevState: any, formData: FormData) {
+  const validatedFields = EditLessonSchema.safeParse({
+    lessonId: formData.get('lessonId'),
+    categoryId: formData.get('categoryId'),
+    title: formData.get('title'),
+    subtitle: formData.get('subtitle'),
+    logoSrc: formData.get('logoSrc'),
+    text: formData.get('text'),
+    audioSrc: formData.get('audioSrc'),
+    vocabulary: formData.get('vocabulary'),
+  });
+
+  if (!validatedFields.success) {
+    const errorMessage = validatedFields.error.errors.map(e => e.message).join(' ');
+    return { message: errorMessage, success: false };
+  }
+
+  const { lessonId, categoryId, title, ...data } = validatedFields.data;
+  const newSlug = slugify(title);
+  const vocabularyData = data.vocabulary ? JSON.parse(data.vocabulary) : {};
+
+  try {
+    const category = await getCategoryById(categoryId);
+    if (!category) {
+      return { message: 'دسته‌بندی یافت نشد.', success: false };
+    }
+
+    const lessonDocRef = doc(db, `categories/${categoryId}/lessons`, lessonId);
+    const currentLessonDoc = await getDoc(lessonDocRef);
+    if (!currentLessonDoc.exists()) {
+        return { message: 'درس مورد نظر یافت نشد.', success: false };
+    }
+    const currentSlug = currentLessonDoc.data().slug;
+    
+    if (currentSlug !== newSlug) {
+      const q = query(collection(db, `categories/${categoryId}/lessons`), where('slug', '==', newSlug));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        return { message: 'درس دیگری با این عنوان در این دسته‌بندی وجود دارد.', success: false };
+      }
+    }
+
+    await updateDoc(lessonDocRef, {
+      title,
+      subtitle: data.subtitle || '',
+      slug: newSlug,
+      logoSrc: data.logoSrc || 'https://placehold.co/100x100.png',
+      text: data.text || '',
+      audioSrc: data.audioSrc || '',
+      vocabulary: vocabularyData,
+    });
+
+    revalidatePath('/admin/dashboard');
+    revalidatePath(`/category/${category.slug}`);
+    revalidatePath(`/lessons/${newSlug}`);
+    if (currentSlug && currentSlug !== newSlug) {
+      revalidatePath(`/lessons/${currentSlug}`);
+    }
+
+  } catch (error) {
+    console.error("Error updating lesson:", error);
+    return { message: 'خطای سرور: امکان ویرایش درس وجود ندارد.', success: false };
+  }
+
   redirect('/admin/dashboard');
 }
