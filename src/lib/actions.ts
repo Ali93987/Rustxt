@@ -409,3 +409,50 @@ export async function deleteUserAction(userId: string): Promise<{ message: strin
     return { message };
   }
 }
+
+// --- User Login Action ---
+const LoginSchema = z.object({
+  email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
+  password: z.string().min(1, { message: 'رمز عبور الزامی است.' }),
+});
+
+export async function loginUserAction(prevState: any, formData: FormData) {
+  const validatedFields = LoginSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: validatedFields.error.errors.map(e => e.message).join(', '),
+      success: false,
+    };
+  }
+  
+  const { email, password } = validatedFields.data;
+
+  try {
+    const q = query(collection(db, 'users'), where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return { message: 'کاربری با این ایمیل یافت نشد.', success: false };
+    }
+
+    // This is a dummy password check for prototyping.
+    // In a real application, use a secure authentication system like Firebase Authentication.
+    if (password !== 'password') {
+      return { message: 'رمز عبور اشتباه است.', success: false };
+    }
+
+    // In a real app, you would set a session cookie here.
+    // For now, we just redirect.
+
+  } catch (error) {
+    console.error("Error during login:", error);
+    return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false };
+  }
+
+  revalidatePath('/'); // To update any UI that might depend on login state
+  redirect('/'); // Redirect to home page on successful login
+}
