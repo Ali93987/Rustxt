@@ -283,12 +283,14 @@ export async function editLessonAction(prevState: any, formData: FormData) {
 const UserSchema = z.object({
   username: z.string().min(3, { message: 'نام کاربری باید حداقل ۳ حرف باشد.' }),
   email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
+  password: z.string().min(6, { message: 'رمز عبور باید حداقل ۶ حرف باشد.' }),
 });
 
 export async function addUserAction(prevState: any, formData: FormData) {
   const validatedFields = UserSchema.safeParse({
     username: formData.get('username'),
     email: formData.get('email'),
+    password: formData.get('password'),
   });
 
   if (!validatedFields.success) {
@@ -299,7 +301,7 @@ export async function addUserAction(prevState: any, formData: FormData) {
     };
   }
 
-  const { username, email } = validatedFields.data;
+  const { username, email, password } = validatedFields.data;
 
   try {
     // Check for existing user with same username or email
@@ -315,10 +317,12 @@ export async function addUserAction(prevState: any, formData: FormData) {
     if (!emailSnapshot.empty) {
       return { message: 'این ایمیل قبلا استفاده شده است.', success: false };
     }
-
+    
+    // In a real application, you should hash the password before storing it.
     await addDoc(collection(db, 'users'), {
       username,
       email,
+      password,
       createdAt: Timestamp.now(),
     });
 
@@ -332,9 +336,17 @@ export async function addUserAction(prevState: any, formData: FormData) {
   redirect('/admin/dashboard');
 }
 
-
-const EditUserSchema = UserSchema.extend({
+const EditUserBaseSchema = z.object({
   id: z.string().min(1, { message: 'شناسه کاربر الزامی است.' }),
+  username: z.string().min(3, { message: 'نام کاربری باید حداقل ۳ حرف باشد.' }),
+  email: z.string().email({ message: 'ایمیل وارد شده معتبر نیست.' }),
+});
+
+const EditUserSchema = EditUserBaseSchema.extend({
+  password: z.string().optional(),
+}).refine(data => !data.password || data.password.length === 0 || data.password.length >= 6, {
+    message: "رمز عبور در صورت وارد شدن باید حداقل ۶ حرف باشد.",
+    path: ["password"],
 });
 
 export async function editUserAction(prevState: any, formData: FormData) {
@@ -342,6 +354,7 @@ export async function editUserAction(prevState: any, formData: FormData) {
     id: formData.get('id'),
     username: formData.get('username'),
     email: formData.get('email'),
+    password: formData.get('password'),
   });
 
   if (!validatedFields.success) {
@@ -351,7 +364,7 @@ export async function editUserAction(prevState: any, formData: FormData) {
     };
   }
 
-  const { id, username, email } = validatedFields.data;
+  const { id, username, email, password } = validatedFields.data;
 
   try {
     const userDocRef = doc(db, 'users', id);
@@ -381,10 +394,17 @@ export async function editUserAction(prevState: any, formData: FormData) {
       }
     }
 
-    await updateDoc(userDocRef, {
+    const dataToUpdate: {username: string; email: string; password?: string} = {
       username,
       email,
-    });
+    };
+    
+    // Only update password if a new one was provided
+    if (password) {
+        dataToUpdate.password = password;
+    }
+
+    await updateDoc(userDocRef, dataToUpdate);
 
     revalidatePath('/admin/dashboard');
 
@@ -412,13 +432,13 @@ export async function deleteUserAction(userId: string): Promise<{ message: strin
 
 // --- User Login Action ---
 const LoginSchema = z.object({
-  identifier: z.string().min(1, { message: 'ایمیل یا نام کاربری الزامی است.' }),
+  username: z.string().min(1, { message: 'نام کاربری الزامی است.' }),
   password: z.string().min(1, { message: 'رمز عبور الزامی است.' }),
 });
 
 export async function loginUserAction(prevState: any, formData: FormData) {
   const validatedFields = LoginSchema.safeParse({
-    identifier: formData.get('identifier'),
+    username: formData.get('username'),
     password: formData.get('password'),
   });
 
@@ -429,23 +449,21 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     };
   }
   
-  const { identifier, password } = validatedFields.data;
+  const { username, password } = validatedFields.data;
 
   try {
-    const isEmail = identifier.includes('@');
-    const queryField = isEmail ? 'email' : 'username';
-
-    const q = query(collection(db, 'users'), where(queryField, '==', identifier));
+    const q = query(collection(db, 'users'), where('username', '==', username));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { message: 'ایمیل یا نام کاربری یافت نشد.', success: false };
+      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
     }
 
-    // This is a dummy password check for prototyping.
-    // In a real application, use a secure authentication system like Firebase Authentication.
-    if (password !== 'password') {
-      return { message: 'رمز عبور اشتباه است.', success: false };
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+
+    if (userData.password !== password) {
+      return { message: 'نام کاربری یا رمز عبور اشتباه است.', success: false };
     }
 
     // In a real app, you would set a session cookie here.

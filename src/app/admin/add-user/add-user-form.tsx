@@ -71,6 +71,18 @@ export function AddUserForm() {
                 dir="ltr"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">رمز عبور</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                required
+                minLength={6}
+                dir="ltr"
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between">
              <Button variant="link" asChild>

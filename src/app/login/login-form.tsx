@@ -46,19 +46,17 @@ export function LoginForm() {
           <CardTitle className="text-2xl text-center font-headline">ورود کاربر</CardTitle>
           <CardDescription className="text-center pt-2">
             برای دسترسی به حساب کاربری خود وارد شوید.
-             <br />
-            (رمز عبور پیش‌فرض: password)
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">ایمیل یا نام کاربری</Label>
+              <Label htmlFor="username">نام کاربری</Label>
               <Input
-                id="identifier"
-                name="identifier"
+                id="username"
+                name="username"
                 type="text"
-                placeholder="user@example.com یا myusername"
+                placeholder="نام کاربری خود را وارد کنید"
                 required
                 dir="ltr"
               />

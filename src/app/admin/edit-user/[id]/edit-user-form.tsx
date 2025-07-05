@@ -73,6 +73,19 @@ export function EditUserForm({ user }: { user: User }) {
                 dir="ltr"
               />
             </div>
+             <div className="space-y-2">
+              <Label htmlFor="password">رمز عبور جدید</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="برای عدم تغییر خالی بگذارید"
+                dir="ltr"
+              />
+               <p className="text-sm text-muted-foreground">
+                برای به‌روزرسانی رمز عبور، رمز جدید را وارد کنید. در غیر این صورت، این فیلد را خالی بگذارید.
+              </p>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between">
              <Button variant="link" asChild>

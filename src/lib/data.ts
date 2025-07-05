@@ -35,6 +35,7 @@ export interface User {
   id: string; // Firestore document ID
   username: string;
   email: string;
+  password?: string; // Stored in DB, but shouldn't be sent to client.
   createdAt?: Timestamp;
 }
 
@@ -202,9 +203,11 @@ export async function getUsers(): Promise<User[]> {
     const usersSnapshot = await getDocs(q);
 
     const usersList = usersSnapshot.docs.map(userDoc => {
+      // Exclude password when fetching for display
+      const { password, ...userData } = userDoc.data();
       return {
         id: userDoc.id,
-        ...userDoc.data(),
+        ...userData,
       } as User;
     });
 
@@ -223,10 +226,12 @@ export async function getUserById(id: string): Promise<User | undefined> {
     if (!userDoc.exists()) {
       return undefined;
     }
-
+    
+    // Exclude password when fetching for display
+    const { password, ...userData } = userDoc.data();
     return {
       id: userDoc.id,
-      ...userDoc.data(),
+      ...userData,
     } as User;
 
   } catch (error) {
