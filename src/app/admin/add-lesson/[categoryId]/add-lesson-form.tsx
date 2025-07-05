@@ -120,6 +120,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 placeholder="متن کامل درس را اینجا وارد کنید. سپس روی کلمات در پیش‌نمایش زیر کلیک کنید."
                 rows={8}
                 className="resize-none"
+                dir="ltr"
               />
             </div>
              <div className="space-y-2">
@@ -139,7 +140,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
             {text && (
               <div className="space-y-2">
                 <Label>پیش‌نمایش واژگان</Label>
-                <Card className="p-4 bg-muted/50">
+                <Card className="p-4 bg-muted/50" dir="ltr">
                   <p className="leading-relaxed whitespace-pre-wrap">
                     {wordsAndSeparators.map((segment, index) => {
                       const normalized = normalizeWord(segment);
@@ -164,7 +165,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                       );
                     })}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-3">
+                  <p className="text-xs text-muted-foreground mt-3 text-right" dir="rtl">
                     روی کلمات کلیک کنید تا معنی آن‌ها را اضافه یا ویرایش کنید.
                   </p>
                 </Card>
