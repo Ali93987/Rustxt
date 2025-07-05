@@ -47,7 +47,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
         <CardHeader>
           <CardTitle className="text-2xl font-headline">افزودن درس جدید به دسته‌بندی «{category.title}»</CardTitle>
           <CardDescription>
-            اطلاعات درس جدید را وارد کرده و فایل صوتی آن را بارگذاری کنید.
+            اطلاعات درس جدید را وارد کرده و فایل صوتی آن را بارگذاری کنید. فقط عنوان درس اجباری است.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
@@ -60,7 +60,7 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="subtitle">زیرنویس (توضیح کوتاه)</Label>
-                    <Input id="subtitle" name="subtitle" placeholder="اولین قدم برای شروع مکالمه" required />
+                    <Input id="subtitle" name="subtitle" placeholder="اولین قدم برای شروع مکالمه" />
                 </div>
             </div>
              <div className="space-y-2">
@@ -69,11 +69,10 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 id="logoSrc"
                 name="logoSrc"
                 placeholder="https://placehold.co/100x100.png"
-                required
                 dir="ltr"
               />
                <p className="text-sm text-muted-foreground">
-                آدرس کامل تصویر لوگوی درس را وارد کنید.
+                آدرس کامل تصویر لوگوی درس را وارد کنید. اگر خالی بماند، از یک تصویر پیش‌فرض استفاده می‌شود.
               </p>
             </div>
             <div className="space-y-2">
@@ -82,7 +81,6 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 id="text"
                 name="text"
                 placeholder="متن کامل درس که شامل کلمات و جملات روسی و ترجمه آن‌هاست را اینجا وارد کنید."
-                required
                 rows={10}
                 className="resize-none"
               />
@@ -94,10 +92,9 @@ export function AddLessonForm({ category }: { category: Pick<Category, 'id' | 't
                 name="audio"
                 type="file"
                 accept="audio/*"
-                required
               />
                <p className="text-sm text-muted-foreground">
-                فایل صوتی با فرمت MP3 یا M4A توصیه می‌شود.
+                فایل صوتی با فرمت MP3 یا M4A توصیه می‌شود. (اختیاری)
               </p>
             </div>
           </CardContent>

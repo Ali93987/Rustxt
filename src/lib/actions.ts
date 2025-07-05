@@ -80,34 +80,43 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
 
 const LessonSchema = z.object({
   categoryId: z.string().min(1, 'شناسه دسته‌بندی الزامی است.'),
-  title: z.string().min(3, { message: 'عنوان درس باید حداقل ۳ حرف باشد.' }),
-  subtitle: z.string().min(3, { message: 'زیرنویس باید حداقل ۳ حرف باشد.' }),
-  logoSrc: z.string().url({ message: 'آدرس لوگو باید یک URL معتبر باشد.' }),
-  text: z.string().min(10, { message: 'متن درس باید حداقل ۱۰ حرف باشد.' }),
-  audio: z
-    .instanceof(File, { message: 'فایل صوتی الزامی است.' })
-    .refine((file) => file.size > 0, 'فایل صوتی نمی‌تواند خالی باشد.')
-    .refine((file) => file.type.startsWith('audio/'), 'فایل انتخاب شده باید از نوع صوتی باشد.'),
+  title: z.string().min(1, { message: 'عنوان درس الزامی است.' }),
+  subtitle: z.string(),
+  logoSrc: z.string(),
+  text: z.string(),
+  audio: z.instanceof(File),
 });
 
 
 export async function addLessonAction(prevState: any, formData: FormData) {
-  const validatedFields = LessonSchema.safeParse({
+  const rawData = {
     categoryId: formData.get('categoryId'),
     title: formData.get('title'),
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
     audio: formData.get('audio'),
-  });
+  };
+
+  const validatedFields = LessonSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     const errorMessage = validatedFields.error.errors.map(e => e.message).join(' ');
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, logoSrc, text, audio } = validatedFields.data;
+  let { categoryId, title, subtitle, logoSrc, text, audio } = validatedFields.data;
   const lessonSlug = slugify(title);
+
+  // Use a default placeholder if logoSrc is empty, otherwise validate it
+  if (!logoSrc) {
+    logoSrc = 'https://placehold.co/100x100.png';
+  } else {
+    const urlCheck = z.string().url().safeParse(logoSrc);
+    if (!urlCheck.success) {
+      return { message: 'آدرس لوگو باید یک URL معتبر باشد.', success: false };
+    }
+  }
   
   try {
     const category = await getCategoryById(categoryId);
@@ -122,23 +131,31 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       return { message: 'درسی با این عنوان در این دسته‌بندی وجود دارد.', success: false };
     }
     
-    // 1. Upload audio file to Firebase Storage
-    const audioBuffer = Buffer.from(await audio.arrayBuffer());
-    const audioFileName = `${Date.now()}-${lessonSlug}-${audio.name}`;
-    const storageRef = ref(storage, `lessons_audio/${audioFileName}`);
-    await uploadBytes(storageRef, audioBuffer, { contentType: audio.type });
-    
-    // 2. Get the public URL of the uploaded file
-    const audioSrc = await getDownloadURL(storageRef);
+    let audioSrc = '';
+    // Check if a valid audio file was uploaded (size > 0)
+    if (audio && audio.size > 0) {
+      if (!audio.type.startsWith('audio/')) {
+        return { message: 'فایل انتخاب شده باید از نوع صوتی باشد.', success: false };
+      }
+      
+      // 1. Upload audio file to Firebase Storage
+      const audioBuffer = Buffer.from(await audio.arrayBuffer());
+      const audioFileName = `${Date.now()}-${lessonSlug}-${audio.name}`;
+      const storageRef = ref(storage, `lessons_audio/${audioFileName}`);
+      await uploadBytes(storageRef, audioBuffer, { contentType: audio.type });
+      
+      // 2. Get the public URL of the uploaded file
+      audioSrc = await getDownloadURL(storageRef);
+    }
     
     // 3. Add lesson data to Firestore
     await addDoc(lessonCollectionRef, {
       title,
-      subtitle,
+      subtitle: subtitle || '',
       slug: lessonSlug,
       logoSrc,
       logoAiHint: "language lesson", // A default hint for AI image generation later
-      text,
+      text: text || '',
       audioSrc,
       createdAt: Timestamp.now(),
     });
