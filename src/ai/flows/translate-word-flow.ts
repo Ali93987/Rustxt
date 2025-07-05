@@ -12,13 +12,13 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import wav from 'wav';
 
-// The input schema for our flow (not exported)
+// The input schema for our flow
 const TranslateWordInputSchema = z.object({
   word: z.string().describe('The Russian word to translate.'),
 });
 export type TranslateWordInput = z.infer<typeof TranslateWordInputSchema>;
 
-// The output schema for our flow (not exported)
+// The output schema for our flow
 const TranslateWordOutputSchema = z.object({
   translation: z.string().describe('The Persian translation of the word.'),
   phonetic: z.string().describe('The phonetic transcription in simple Latin letters (e.g., privet).'),
@@ -37,7 +37,7 @@ export async function translateWord(input: TranslateWordInput): Promise<Translat
 // Genkit prompt for getting translation and phonetics in a structured format
 const translationPrompt = ai.definePrompt({
   name: 'translationPrompt',
-  input: { schema: z.object({ word: z.string() }) },
+  input: { schema: TranslateWordInputSchema }, // Use the existing schema
   output: {
     schema: z.object({
       translation: z.string().describe('The direct, most common Persian translation.'),

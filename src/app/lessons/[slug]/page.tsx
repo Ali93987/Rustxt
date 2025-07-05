@@ -35,9 +35,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const { lesson, category } = data;
 
-  // We can't pass the icon component to a client component.
-  // Let's create a serializable category object without the icon component.
-  const { icon, ...serializableCategory } = category;
+  // We can't pass non-serializable props like components or Timestamp objects to Client Components.
+  // Let's create serializable versions of the objects we need to pass.
+  const { icon, createdAt: _cAt, ...serializableCategory } = category;
+  const { createdAt: _lAt, ...serializableLesson } = lesson;
+
 
   return (
     <div className="min-h-screen">
@@ -69,7 +71,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             </div>
           </div>
           
-          <LessonView lesson={lesson} category={serializableCategory} />
+          <LessonView lesson={serializableLesson} category={serializableCategory} />
         </main>
       </div>
     </div>
