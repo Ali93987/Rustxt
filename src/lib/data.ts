@@ -16,6 +16,7 @@ export interface Lesson {
   audioSrc: string;
   logoSrc: string;
   logoAiHint: string;
+  vocabulary?: Record<string, string>;
   createdAt?: Timestamp;
 }
 

@@ -84,6 +84,7 @@ const LessonSchema = z.object({
   logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).nullable().optional(),
   text: z.string().nullable().optional(),
   audioSrc: z.string().url({ message: "آدرس اینترنتی فایل صوتی نامعتبر است." }).or(z.literal('')).nullable().optional(),
+  vocabulary: z.string().optional(),
 });
 
 
@@ -95,6 +96,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
     audioSrc: formData.get('audioSrc'),
+    vocabulary: formData.get('vocabulary'),
   });
 
   if (!validatedFields.success) {
@@ -103,8 +105,10 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  const { categoryId, title, subtitle, text, logoSrc, audioSrc } = validatedFields.data;
+  const { categoryId, title, subtitle, text, logoSrc, audioSrc, vocabulary } = validatedFields.data;
   const lessonSlug = slugify(title);
+  
+  const vocabularyData = vocabulary ? JSON.parse(vocabulary) : {};
 
   try {
     const category = await getCategoryById(categoryId);
@@ -119,22 +123,20 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       return { message: 'درسی با این عنوان در این دسته‌بندی وجود دارد.', success: false };
     }
     
-    // Use the provided logoSrc or fallback to a placeholder
     const finalLogoSrc = logoSrc || 'https://placehold.co/100x100.png';
     
-    // Add lesson data to Firestore
     await addDoc(lessonCollectionRef, {
       title,
       subtitle: subtitle || '',
       slug: lessonSlug,
       logoSrc: finalLogoSrc,
-      logoAiHint: "language lesson", // A default hint for AI image generation later
+      logoAiHint: "language lesson",
       text: text || '',
       audioSrc: audioSrc || '',
+      vocabulary: vocabularyData,
       createdAt: Timestamp.now(),
     });
     
-    // Revalidate and redirect
     revalidatePath('/admin/dashboard');
     revalidatePath(`/category/${category.slug}`);
     revalidatePath('/');

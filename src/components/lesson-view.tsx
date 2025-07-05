@@ -6,6 +6,12 @@ import { useProgress } from '@/hooks/use-progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Check, CirclePlay, RotateCcw } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type SerializableCategory = Omit<Category, 'icon' | 'lessons' | 'createdAt'>;
 type SerializableLesson = Omit<Lesson, 'createdAt'>;
@@ -14,6 +20,10 @@ interface LessonViewProps {
   lesson: SerializableLesson;
   category: SerializableCategory;
 }
+
+const normalizeWord = (word: string) => {
+  return word.trim().replace(/[.,!?;:"()]/g, '').toLowerCase();
+};
 
 export function LessonView({ lesson, category }: LessonViewProps) {
   const { isCompleted, toggleComplete } = useProgress();
@@ -41,12 +51,33 @@ export function LessonView({ lesson, category }: LessonViewProps) {
     }
   }, [lesson, category]);
 
+  const wordsAndSeparators = lesson.text ? lesson.text.split(/([ \n\t]+)/) : [];
+
   return (
-    <>
+    <TooltipProvider delayDuration={100}>
       {/* Lesson Text */}
       {lesson.text && (
         <div className="whitespace-pre-wrap font-body text-lg leading-relaxed text-foreground/90 mb-8 border p-4 rounded-md">
-          {lesson.text}
+          {wordsAndSeparators.map((segment, index) => {
+            const normalized = normalizeWord(segment);
+            const translation = normalized && lesson.vocabulary?.[normalized];
+
+            if (translation) {
+              return (
+                <Tooltip key={index}>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-pointer font-bold text-primary underline decoration-dotted decoration-primary/50 hover:bg-primary/10 transition-colors rounded-sm px-1 py-0.5">
+                      {segment}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-body text-base">{translation}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+            return <span key={index}>{segment}</span>;
+          })}
         </div>
       )}
       
@@ -93,6 +124,6 @@ export function LessonView({ lesson, category }: LessonViewProps) {
           </Button>
         </div>
       </div>
-    </>
+    </TooltipProvider>
   );
 }
