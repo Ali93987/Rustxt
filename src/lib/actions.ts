@@ -81,10 +81,12 @@ export async function addCategoryAction(prevState: any, formData: FormData) {
 const LessonSchema = z.object({
   categoryId: z.string().min(1, 'شناسه دسته‌بندی الزامی است.'),
   title: z.string().min(1, { message: 'عنوان درس الزامی است.' }),
-  subtitle: z.string(),
-  logoSrc: z.string(),
-  text: z.string(),
-  audio: z.instanceof(File),
+  subtitle: z.string().optional(),
+  logoSrc: z.string().url({ message: "آدرس اینترنتی لوگو نامعتبر است." }).or(z.literal('')).optional(),
+  text: z.string().optional(),
+  // Files will be validated separately in the action
+  logoFile: z.instanceof(File).optional(),
+  audio: z.instanceof(File).optional(),
 });
 
 
@@ -95,6 +97,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     subtitle: formData.get('subtitle'),
     logoSrc: formData.get('logoSrc'),
     text: formData.get('text'),
+    logoFile: formData.get('logoFile'),
     audio: formData.get('audio'),
   };
 
@@ -105,19 +108,13 @@ export async function addLessonAction(prevState: any, formData: FormData) {
     return { message: errorMessage, success: false };
   }
   
-  let { categoryId, title, subtitle, logoSrc, text, audio } = validatedFields.data;
+  const { categoryId, title, subtitle, text } = validatedFields.data;
+  const urlLogoSrc = validatedFields.data.logoSrc;
+  const logoFile = validatedFields.data.logoFile;
+  const audioFile = validatedFields.data.audio;
+  
   const lessonSlug = slugify(title);
 
-  // Use a default placeholder if logoSrc is empty, otherwise validate it
-  if (!logoSrc) {
-    logoSrc = 'https://placehold.co/100x100.png';
-  } else {
-    const urlCheck = z.string().url().safeParse(logoSrc);
-    if (!urlCheck.success) {
-      return { message: 'آدرس لوگو باید یک URL معتبر باشد.', success: false };
-    }
-  }
-  
   try {
     const category = await getCategoryById(categoryId);
     if (!category) {
@@ -131,20 +128,40 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       return { message: 'درسی با این عنوان در این دسته‌بندی وجود دارد.', success: false };
     }
     
+    // --- Logo Handling Logic ---
+    let finalLogoSrc = '';
+    
+    // 1. Prioritize file upload
+    if (logoFile && logoFile.size > 0) {
+      if (!logoFile.type.startsWith('image/')) {
+        return { message: 'فایل لوگو باید از نوع تصویر باشد.', success: false };
+      }
+      const logoBuffer = Buffer.from(await logoFile.arrayBuffer());
+      const logoFileName = `${Date.now()}-${lessonSlug}-${logoFile.name}`;
+      const logoStorageRef = ref(storage, `lessons_logos/${logoFileName}`);
+      await uploadBytes(logoStorageRef, logoBuffer, { contentType: logoFile.type });
+      finalLogoSrc = await getDownloadURL(logoStorageRef);
+    } 
+    // 2. Fallback to URL if provided
+    else if (urlLogoSrc) {
+      finalLogoSrc = urlLogoSrc;
+    } 
+    // 3. Fallback to placeholder
+    else {
+      finalLogoSrc = 'https://placehold.co/100x100.png';
+    }
+    
+    // --- Audio Handling Logic ---
     let audioSrc = '';
-    // Check if a valid audio file was uploaded (size > 0)
-    if (audio && audio.size > 0) {
-      if (!audio.type.startsWith('audio/')) {
+    if (audioFile && audioFile.size > 0) {
+      if (!audioFile.type.startsWith('audio/')) {
         return { message: 'فایل انتخاب شده باید از نوع صوتی باشد.', success: false };
       }
       
-      // 1. Upload audio file to Firebase Storage
-      const audioBuffer = Buffer.from(await audio.arrayBuffer());
-      const audioFileName = `${Date.now()}-${lessonSlug}-${audio.name}`;
+      const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+      const audioFileName = `${Date.now()}-${lessonSlug}-${audioFile.name}`;
       const storageRef = ref(storage, `lessons_audio/${audioFileName}`);
-      await uploadBytes(storageRef, audioBuffer, { contentType: audio.type });
-      
-      // 2. Get the public URL of the uploaded file
+      await uploadBytes(storageRef, audioBuffer, { contentType: audioFile.type });
       audioSrc = await getDownloadURL(storageRef);
     }
     
@@ -153,7 +170,7 @@ export async function addLessonAction(prevState: any, formData: FormData) {
       title,
       subtitle: subtitle || '',
       slug: lessonSlug,
-      logoSrc,
+      logoSrc: finalLogoSrc,
       logoAiHint: "language lesson", // A default hint for AI image generation later
       text: text || '',
       audioSrc,
