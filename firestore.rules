@@ -1,0 +1,32 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow public read access to categories and their lessons,
+    // but restrict write access. This allows anyone to view the content.
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false; // To be implemented: allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+
+      match /lessons/{lessonId} {
+        allow read: if true;
+        allow write: if false; // To be implemented: allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      }
+    }
+
+    // Allow users to be created, but only let authenticated users
+    // read/update their own data.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if true;
+      allow delete: if false; // Deletion should be handled by admin functions
+    }
+    
+    // Settings can only be read and written by authenticated admins (to be implemented)
+    match /settings/{settingId} {
+        allow read, write: if false; // To be implemented with admin auth
+    }
+  }
+}
