@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
 
     // Dummy authentication. In a real app, use a proper auth system.
     setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
+      if (username === 'Alireza93987' && password === '2480055884') {
         toast({
           title: 'ورود موفقیت‌آمیز',
           description: 'به پنل مدیریت خوش آمدید.',
@@ -46,8 +46,6 @@ export default function AdminLoginPage() {
           <CardTitle className="text-2xl text-center font-headline">ورود مدیر</CardTitle>
           <CardDescription className="text-center pt-2">
             برای مدیریت درس‌ها وارد شوید.
-            <br />
-            (نام کاربری: admin, رمز عبور: password)
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
@@ -57,7 +55,7 @@ export default function AdminLoginPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
+                placeholder="نام کاربری"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -69,7 +67,7 @@ export default function AdminLoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="password"
+                placeholder="رمز عبور"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
