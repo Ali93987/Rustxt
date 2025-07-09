@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PlusCircle, Edit, Trash2, LogOut, User, BookOpen } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, LogOut, User, BookOpen, Settings } from 'lucide-react';
 import { UserActions } from './user-actions';
 
 export default async function AdminDashboardPage() {
@@ -17,12 +17,20 @@ export default async function AdminDashboardPage() {
         <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">
           پنل مدیریت
         </h1>
-        <Button asChild variant="outline">
-          <Link href="/">
-            خروج
-            <LogOut className="mr-2 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/settings">
+              تنظیمات
+              <Settings className="mr-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">
+              خروج
+              <LogOut className="mr-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

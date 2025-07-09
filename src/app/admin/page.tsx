@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -8,36 +8,44 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { adminLoginAction } from '@/lib/actions';
+import { useEffect } from 'react';
+
+const initialState = {
+  success: false,
+  message: '',
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? 'در حال ورود...' : 'ورود'}
+    </Button>
+  );
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, formAction] = useFormState(adminLoginAction, initialState);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Dummy authentication. In a real app, use a proper auth system.
-    setTimeout(() => {
-      if (username === 'Alireza93987' && password === '2480055884') {
-        toast({
-          title: 'ورود موفقیت‌آمیز',
-          description: 'به پنل مدیریت خوش آمدید.',
-        });
-        router.push('/admin/dashboard');
-      } else {
-        toast({
+  useEffect(() => {
+    if (state.success) {
+      toast({
+        title: 'ورود موفقیت‌آمیز',
+        description: 'به پنل مدیریت خوش آمدید.',
+      });
+      router.push('/admin/dashboard');
+    } else if (state.message) {
+       toast({
           variant: 'destructive',
           title: 'خطا در ورود',
-          description: 'نام کاربری یا رمز عبور اشتباه است.',
+          description: state.message,
         });
-        setIsLoading(false);
-      }
-    }, 1000);
-  };
+    }
+  }, [state, router, toast]);
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -48,16 +56,15 @@ export default function AdminLoginPage() {
             برای مدیریت درس‌ها وارد شوید.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form action={formAction}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">نام کاربری</Label>
               <Input
                 id="username"
+                name="username"
                 type="text"
                 placeholder="نام کاربری"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
                 required
                 dir="ltr"
               />
@@ -66,19 +73,16 @@ export default function AdminLoginPage() {
               <Label htmlFor="password">رمز عبور</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 placeholder="رمز عبور"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 dir="ltr"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'در حال ورود...' : 'ورود'}
-            </Button>
+            <SubmitButton />
             <Button variant="link" asChild>
                 <Link href="/">بازگشت به صفحه اصلی</Link>
             </Button>

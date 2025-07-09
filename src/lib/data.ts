@@ -43,6 +43,11 @@ export interface User {
   createdAt?: Timestamp;
 }
 
+export interface AdminCredentials {
+  username: string;
+  password?: string;
+}
+
 
 // --- Icon Mapping ---
 // This map helps us convert the icon name string from Firestore into a renderable component.
@@ -241,5 +246,28 @@ export async function getUserById(id: string): Promise<User | undefined> {
   } catch (error) {
     console.error(`Error fetching user with id ${id}:`, error);
     return undefined;
+  }
+}
+
+export async function getAdminCredentials(): Promise<AdminCredentials> {
+  try {
+    const settingsDocRef = doc(db, 'settings', 'admin');
+    const docSnap = await getDoc(settingsDocRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as AdminCredentials;
+    } else {
+      // Fallback to hardcoded values if not found in DB
+      return {
+        username: process.env.ADMIN_USERNAME || 'Alireza93987',
+        password: process.env.ADMIN_PASSWORD || '2480055884',
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching admin credentials:", error);
+    // Fallback on error as well
+    return {
+      username: process.env.ADMIN_USERNAME || 'Alireza93987',
+      password: process.env.ADMIN_PASSWORD || '2480055884',
+    };
   }
 }

@@ -2,11 +2,11 @@
 'use server';
 
 import { z } from 'zod';
-import { addDoc, collection, Timestamp, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { availableIcons, getCategoryById } from './data';
+import { availableIcons, getCategoryById, getAdminCredentials } from './data';
 import { randomUUID } from 'crypto';
 
 // A more robust slugify function that correctly handles Unicode characters.
@@ -538,4 +538,62 @@ export async function loginUserAction(prevState: any, formData: FormData) {
     console.error("Error during login:", error);
     return { message: 'یک خطای غیرمنتظره در سرور رخ داد.', success: false, user: null };
   }
+}
+
+// --- Admin Login Action ---
+const AdminLoginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
+export async function adminLoginAction(prevState: any, formData: FormData) {
+  const validatedFields = AdminLoginSchema.safeParse({
+    username: formData.get('username'),
+    password: formData.get('password'),
+  });
+
+  if (!validatedFields.success) {
+    return { success: false, message: 'داده‌های ورودی نامعتبر است.' };
+  }
+
+  try {
+    const { username, password } = validatedFields.data;
+    const adminCreds = await getAdminCredentials();
+
+    if (username === adminCreds.username && password === adminCreds.password) {
+      return { success: true, message: 'ورود موفقیت‌آمیز' };
+    } else {
+      return { success: false, message: 'نام کاربری یا رمز عبور اشتباه است.' };
+    }
+  } catch (error) {
+    console.error("Admin login error:", error);
+    return { success: false, message: 'خطایی در سرور رخ داد.' };
+  }
+}
+
+// --- Update Admin Credentials Action ---
+const AdminSettingsSchema = z.object({
+  username: z.string().min(1, { message: 'نام کاربری الزامی است.' }),
+  password: z.string().min(1, { message: 'رمز عبور الزامی است.' }),
+});
+
+export async function updateAdminCredentialsAction(prevState: any, formData: FormData) {
+    const validatedFields = AdminSettingsSchema.safeParse({
+        username: formData.get('username'),
+        password: formData.get('password'),
+    });
+
+    if (!validatedFields.success) {
+        return { success: false, message: validatedFields.error.errors.map(e => e.message).join(', ') };
+    }
+
+    try {
+        const { username, password } = validatedFields.data;
+        const settingsDocRef = doc(db, 'settings', 'admin');
+        await setDoc(settingsDocRef, { username, password });
+        return { success: true, message: 'اطلاعات با موفقیت به‌روزرسانی شد.' };
+    } catch (error) {
+        console.error("Error updating admin credentials:", error);
+        return { success: false, message: 'خطایی در هنگام ذخیره اطلاعات رخ داد.' };
+    }
 }
