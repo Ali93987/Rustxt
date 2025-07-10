@@ -13,13 +13,17 @@ interface LessonPageProps {
   };
 }
 
+// This function is still useful for SEO and build-time optimization,
+// but we need to fetch all lessons from all categories to generate all possible slugs.
 export async function generateStaticParams() {
   const categories = await getCategories();
-  
   const allLessons = [];
+
   for (const category of categories) {
-    if (category.lessons) {
-      for (const lesson of category.lessons) {
+    // We need to get the full category data including lessons here
+    const fullCategory = await getCategory(category.slug);
+    if (fullCategory && fullCategory.lessons) {
+      for (const lesson of fullCategory.lessons) {
         allLessons.push({ slug: lesson.slug });
       }
     }

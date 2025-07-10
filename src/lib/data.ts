@@ -89,26 +89,14 @@ export async function getCategories(): Promise<Category[]> {
     const q = query(categoriesCollection, orderBy('createdAt', 'asc'));
     const categorySnapshot = await getDocs(q);
 
-    const categoriesList = await Promise.all(categorySnapshot.docs.map(async (categoryDoc) => {
-      const categoryData = {
-        id: categoryDoc.id,
-        ...categoryDoc.data(),
-      } as Category;
-
-      const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
-      const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
-      const lessonsSnapshot = await getDocs(lessonsQuery);
-      categoryData.lessons = lessonsSnapshot.docs.map(lessonDoc => {
-          const lesson = {
-              id: lessonDoc.id,
-              ...lessonDoc.data(),
-          } as Lesson;
-          lesson.logoSrc = correctImageUrl(lesson.logoSrc);
-          return lesson;
-      });
-
-      return categoryData;
-    }));
+    // OPTIMIZATION: Fetch only categories here. Lessons will be fetched on the category page.
+    const categoriesList = categorySnapshot.docs.map(doc => {
+        return {
+            id: doc.id,
+            lessons: [], // Lessons are not needed on the homepage
+            ...doc.data()
+        } as Category;
+    });
 
     return categoriesList;
   } catch (error) {
@@ -132,6 +120,7 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
       ...categoryDoc.data(),
     } as Category;
     
+    // Now fetch the lessons for this specific category
     const lessonsCollection = collection(db, `categories/${categoryDoc.id}/lessons`);
     const lessonsQuery = query(lessonsCollection, orderBy('createdAt', 'asc'));
     const lessonsSnapshot = await getDocs(lessonsQuery);
@@ -166,7 +155,10 @@ export async function getCategoryById(id: string): Promise<Category | undefined>
       ...categoryDoc.data(),
     } as Category;
     
-    categoryData.lessons = []; // Lessons not needed for this helper's current use case.
+    // In this specific function, we usually don't need the lessons,
+    // for example when adding a new lesson to a category.
+    // If lessons are needed, they should be fetched explicitly.
+    categoryData.lessons = []; 
     
     return categoryData;
 
@@ -181,7 +173,7 @@ export async function getLessonAndCategory(
   lessonSlug: string
 ): Promise<{ lesson: Lesson; category: Category } | undefined> {
   try {
-    const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+    const categoriesSnapshot = await getDocs(query(collection(db, 'categories'), orderBy('createdAt', 'asc')));
 
     for (const categoryDoc of categoriesSnapshot.docs) {
       const lessonsCollectionRef = collection(db, `categories/${categoryDoc.id}/lessons`);
@@ -191,11 +183,10 @@ export async function getLessonAndCategory(
       if (!lessonSnapshot.empty) {
         const lessonDoc = lessonSnapshot.docs[0];
         const lesson = { id: lessonDoc.id, ...lessonDoc.data() } as Lesson;
-        const category = { id: categoryDoc.id, ...categoryDoc.data() } as Category;
+        const category = { id: categoryDoc.id, lessons: [], ...categoryDoc.data() } as Category;
         
         lesson.logoSrc = correctImageUrl(lesson.logoSrc);
-
-        category.lessons = []; 
+        
         return { lesson, category };
       }
     }

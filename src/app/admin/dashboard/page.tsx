@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCategories, getUsers } from '@/lib/data';
+import { getCategories, getCategory, getUsers } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,14 @@ import { PlusCircle, Edit, Trash2, LogOut, User, BookOpen, Settings } from 'luci
 import { UserActions } from './user-actions';
 
 export default async function AdminDashboardPage() {
-  const categories = await getCategories();
+  // First, get the list of categories (without lessons)
+  const categoriesList = await getCategories();
+  
+  // Then, fetch the full data for each category to get its lessons
+  const categories = await Promise.all(
+    categoriesList.map(category => getCategory(category.slug))
+  ).then(results => results.filter(Boolean)); // Filter out any undefined results
+
   const users = await getUsers();
 
   return (
